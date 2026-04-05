@@ -1,8 +1,6 @@
-FROM node:20-slim AS builder
+# Gunakan image Node 20 versi PENUH (bukan alpine, bukan slim)
+FROM node:20 AS builder
 WORKDIR /app
-
-# Install OpenSSL (Wajib untuk mesin Prisma)
-RUN apt-get update && apt-get install -y openssl procps
 
 COPY package*.json ./
 RUN npm install
@@ -10,11 +8,9 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:20-slim
+# Gunakan image Node 20 versi PENUH untuk jalankan aplikasi
+FROM node:20
 WORKDIR /app
-
-# Install OpenSSL di image production juga
-RUN apt-get update && apt-get install -y openssl procps
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
