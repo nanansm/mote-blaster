@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum InstanceStatus {
+  DISCONNECTED
+  CONNECTING
+  QR_CODE
+  CONNECTED
+  ERROR
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  PAUSED
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum ContactSource {
+  CSV
+  GOOGLE_SHEETS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  UNPAID
+}
+
+// ─── MODELS ─────────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  googleId        String    @unique
+  email           String    @unique
+  name            String
+  avatarUrl       String?
+  plan            Plan      @default(FREE)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  instances       Instance[]
+  campaigns       Campaign[]
+  subscription    Subscription?
+  refreshTokens   RefreshToken[]
+  dailyUsage      DailyUsage[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Instance {
+  id            String         @id @default(cuid())
+  userId        String
+  name          String         // Display name (e.g., "Main Account")
+  sessionName   String         @unique  // WPPConnect session name
+  phoneNumber   String?        // Connected phone number
+  status        InstanceStatus @default(DISCONNECTED)
+  lastConnected DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns     Campaign[]
+
+  @@map("instances")
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  userId         String
+  instanceId     String
+  name           String
+  messageTemplate String        // Template with {{variables}}
+  status         CampaignStatus @default(DRAFT)
+  contactSource  ContactSource
+  contactsCount  Int            @default(0)
+  sentCount      Int            @default(0)
+  failedCount    Int            @default(0)
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instance       Instance       @relation(fields: [instanceId], references: [id])
+  contacts       Contact[]
+  messageLogs    MessageLog[]
+
+  @@map("campaigns")
+}
+
+model Contact {
+  id          String   @id @default(cuid())
+  campaignId  String
+  phone       String   // E.164 format: 628123456789
+  name        String?
+  variables   Json?    // { "custom1": "value", "custom2": "value" }
+  createdAt   DateTime @default(now())
+
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
+}
+
+model MessageLog {
+  id          String        @id @default(cuid())
+  campaignId  String
+  contactPhone String
+  contactName  String?
+  renderedMessage String?   // Final message after variable substitution
+  status      MessageStatus @default(PENDING)
+  error       String?
+  sentAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  campaign    Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("message_logs")
+}
+
+model DailyUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @db.Date  // Stored as date only (YYYY-MM-DD)
+  sentCount Int      @default(0)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_usage")
+}
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  userId                String             @unique
+  xenditSubscriptionId  String             @unique
+  xenditCustomerId      String
+  status                SubscriptionStatus @default(ACTIVE)
+  planName              String             @default("PRO")
+  amount                Int                // in IDR (e.g., 99000)
+  currency              String             @default("IDR")
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  cancelledAt           DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
