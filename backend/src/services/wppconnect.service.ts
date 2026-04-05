@@ -12,7 +12,7 @@ export class WPPConnectService {
         throw new Error(`WPPConnect error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as { qrCode?: string; status: string };
       return data;
     } catch (error) {
       console.error('startSession error:', error);
@@ -30,7 +30,7 @@ export class WPPConnectService {
         return 'ERROR';
       }
 
-      const data = await response.json();
+      const data = await response.json() as { status: string };
       return data.status || 'DISCONNECTED';
     } catch (error) {
       console.error('getSessionStatus error:', error);
@@ -48,7 +48,7 @@ export class WPPConnectService {
         return null;
       }
 
-      const data = await response.json();
+      const data = await response.json() as { qrcode?: string; base64?: string };
       return data.qrcode || data.base64 || null;
     } catch (error) {
       console.error('getQRCode error:', error);
@@ -71,14 +71,14 @@ export class WPPConnectService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({})) as { message?: string };
         return {
           success: false,
           error: errorData.message || `HTTP ${response.status}`,
         };
       }
 
-      const data = await response.json();
+      const data = await response.json() as { messageId?: string; id?: string };
       return {
         success: true,
         messageId: data.messageId || data.id,

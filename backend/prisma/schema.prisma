@@ -151,6 +151,7 @@ model MessageLog {
 
   campaign    Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
+  @@unique([campaignId, contactPhone])
   @@map("message_logs")
 }
 

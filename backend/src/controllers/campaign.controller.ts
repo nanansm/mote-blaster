@@ -1,19 +1,18 @@
-import { Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { prisma } from '../config/database';
-import { AuthRequest } from '../middlewares/auth.middleware';
-import { MessageQueueService, addBlastJobs } from '../services/messageQueue.service';
+import { addBlastJobs, blastQueue } from '../services/messageQueue.service';
 import { parseCSV, ContactData } from '../utils/csvParser';
 import { fetchSheetData, extractSpreadsheetId } from '../services/googleSheets.service';
-import { TemplateEngine } from 'socket.io';
+import type { AuthRequest } from '../middlewares/auth.middleware';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 export const campaignController = {
   // GET /api/v1/campaigns
-  listCampaigns: async (req: AuthRequest, res: Response) => {
+  listCampaigns: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const status = req.query.status as string | undefined;
@@ -60,9 +59,9 @@ export const campaignController = {
   },
 
   // POST /api/v1/campaigns
-  createCampaign: async (req: AuthRequest, res: Response) => {
+  createCampaign: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const { name, instanceId, messageTemplate, contactSource, contacts = [] } = req.body;
 
       if (!name || !instanceId || !messageTemplate || !contactSource) {
@@ -145,7 +144,7 @@ export const campaignController = {
           data: contacts.map((c: ContactData) => ({
             campaignId: campaign.id,
             contactPhone: c.phone,
-            contactName: c.name,
+            contactName: c.name ?? undefined,
             status: 'PENDING',
           })),
         });
@@ -159,10 +158,10 @@ export const campaignController = {
   },
 
   // GET /api/v1/campaigns/:id
-  getCampaign: async (req: AuthRequest, res: Response) => {
+  getCampaign: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const campaign = await prisma.campaign.findFirst({
         where: {
@@ -189,10 +188,10 @@ export const campaignController = {
   },
 
   // PUT /api/v1/campaigns/:id
-  updateCampaign: async (req: AuthRequest, res: Response) => {
+  updateCampaign: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const { name, messageTemplate } = req.body;
 
       const campaign = await prisma.campaign.findFirst({
@@ -226,10 +225,10 @@ export const campaignController = {
   },
 
   // DELETE /api/v1/campaigns/:id
-  deleteCampaign: async (req: AuthRequest, res: Response) => {
+  deleteCampaign: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const campaign = await prisma.campaign.findFirst({
         where: {
@@ -254,10 +253,10 @@ export const campaignController = {
   },
 
   // POST /api/v1/campaigns/:id/start
-  startCampaign: async (req: AuthRequest, res: Response) => {
+  startCampaign: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const campaign = await prisma.campaign.findFirst({
         where: {
@@ -294,7 +293,11 @@ export const campaignController = {
       // Add jobs to queue
       await addBlastJobs(
         campaign.id,
-        campaign.contacts,
+        campaign.contacts.map(c => ({
+          phone: c.phone,
+          name: c.name ?? undefined,
+          variables: (c.variables as Record<string, string>) || {},
+        })),
         campaign.instanceId,
         userId,
         campaign.messageTemplate,
@@ -309,10 +312,10 @@ export const campaignController = {
   },
 
   // POST /api/v1/campaigns/:id/pause
-  pauseCampaign: async (req: AuthRequest, res: Response) => {
+  pauseCampaign: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const campaign = await prisma.campaign.findFirst({
         where: {
@@ -330,7 +333,7 @@ export const campaignController = {
       }
 
       // Pause the queue
-      await MessageQueueService.blastQueue.pause();
+      await blastQueue.pause();
 
       await prisma.campaign.update({
         where: { id },
@@ -345,10 +348,10 @@ export const campaignController = {
   },
 
   // GET /api/v1/campaigns/:id/logs
-  getCampaignLogs: async (req: AuthRequest, res: Response) => {
+  getCampaignLogs: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 50;
       const status = req.query.status as string | undefined;
@@ -398,10 +401,10 @@ export const campaignController = {
   },
 
   // GET /api/v1/campaigns/:id/export
-  exportCampaignLogs: async (req: AuthRequest, res: Response) => {
+  exportCampaignLogs: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       // Verify campaign belongs to user
       const campaign = await prisma.campaign.findFirst({
@@ -448,7 +451,7 @@ export const campaignController = {
   },
 
   // POST /api/v1/campaigns/upload-csv
-  uploadCSV: async (req: AuthRequest, res: Response) => {
+  uploadCSV: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const file = req.file as { buffer: Buffer } | undefined;
 
@@ -476,7 +479,7 @@ export const campaignController = {
   },
 
   // POST /api/v1/campaigns/fetch-sheet
-  fetchSheet: async (req: AuthRequest, res: Response) => {
+  fetchSheet: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { url } = req.body;
 

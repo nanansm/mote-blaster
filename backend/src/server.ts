@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import passport from 'passport';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import dotenv from 'dotenv';
 import { prisma } from './config/database';
 import { initializePassport } from './config/passport';
@@ -21,6 +21,13 @@ import billingRoutes from './routes/billing.routes';
 import { errorMiddleware } from './middlewares/error.middleware';
 
 dotenv.config();
+
+// Extend Socket interface to include userId
+declare module 'socket.io' {
+  interface Socket {
+    userId?: string;
+  }
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -110,8 +117,12 @@ io.on('connection', (socket) => {
 export { io };
 
 // Start blast worker
-createBlastWorker().then(() => {
+const blastWorker = createBlastWorker();
+blastWorker.on('ready', () => {
   console.log('Blast worker started');
+});
+blastWorker.on('error', (err: any) => {
+  console.error('Blast worker error:', err);
 });
 
 // Error handling

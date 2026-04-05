@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { dashboardController } from '../controllers/dashboard.controller';
-import { authMiddleware, checkPlanLimit } from '../middlewares/auth.middleware';
+import { authMiddleware } from '../middlewares/auth.middleware';
+import { checkPlanLimit } from '../middlewares/plan.middleware';
 
 const router = Router();
 

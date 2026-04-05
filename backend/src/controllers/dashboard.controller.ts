@@ -1,12 +1,12 @@
-import { Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
-import { AuthRequest } from '../middlewares/auth.middleware';
+import type { AuthRequest } from '../middlewares/auth.middleware';
 
 export const dashboardController = {
   // GET /api/v1/dashboard/stats
-  getStats: async (req: AuthRequest, res: Response) => {
+  getStats: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       // Messages sent this month
       const now = new Date();
@@ -65,7 +65,7 @@ export const dashboardController = {
 
       const dailySentCount = dailyUsage?.sentCount || 0;
       const dailyLimit = parseInt(process.env.FREE_PLAN_DAILY_LIMIT || '50', 10);
-      const isPro = req.user!.plan === 'PRO';
+      const isPro = (req as AuthRequest).user!.plan === 'PRO';
       const dailyRemaining = isPro ? null : dailyLimit - dailySentCount;
 
       res.json({
@@ -83,9 +83,9 @@ export const dashboardController = {
   },
 
   // GET /api/v1/dashboard/chart/daily?days=30
-  getDailyChart: async (req: AuthRequest, res: Response) => {
+  getDailyChart: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const days = parseInt(req.query.days as string) || 30;
 
       const data: Array<{ date: string; sent: number; failed: number }> = [];
@@ -133,9 +133,9 @@ export const dashboardController = {
   },
 
   // GET /api/v1/dashboard/chart/campaigns
-  getCampaignChart: async (req: AuthRequest, res: Response) => {
+  getCampaignChart: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const campaigns = await prisma.campaign.groupBy({
         by: ['status'],

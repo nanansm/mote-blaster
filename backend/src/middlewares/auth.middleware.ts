@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import cookie from 'cookie';
 import { verifyAccessToken } from '../utils/jwt';
+import { Subscription } from '@prisma/client';
 
 export interface AuthRequest extends Request {
   user?: {
     userId: string;
     email: string;
     plan: string;
+    subscription?: Subscription;
   };
 }
 

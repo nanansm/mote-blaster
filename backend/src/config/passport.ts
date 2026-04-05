@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { prisma } from '../database';
+import { prisma } from './database';
 
 export function initializePassport() {
   passport.use(
@@ -13,7 +13,7 @@ export function initializePassport() {
       },
       async (req, accessToken, refreshToken, profile, done) => {
         try {
-          const email = profile.emails[0].value;
+          const email = profile.emails?.[0]?.value || '';
           const name = profile.displayName;
           const googleId = profile.id;
           const avatarUrl = profile.photos?.[0]?.value || null;
@@ -60,7 +60,7 @@ export function initializePassport() {
           return done(null, payload);
         } catch (error) {
           console.error('Passport strategy error:', error);
-          return done(error, null);
+          return done(error as any, false);
         }
       }
     )

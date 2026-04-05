@@ -1,13 +1,13 @@
-import { Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
-import { AuthRequest } from '../middlewares/auth.middleware';
 import { wppConnectService } from '../services/wppconnect.service';
+import type { AuthRequest } from '../middlewares/auth.middleware';
 
 export const instanceController = {
   // GET /api/v1/instances
-  listInstances: async (req: AuthRequest, res: Response) => {
+  listInstances: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const instances = await prisma.instance.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
@@ -21,9 +21,9 @@ export const instanceController = {
   },
 
   // POST /api/v1/instances
-  createInstance: async (req: AuthRequest, res: Response) => {
+  createInstance: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const { name } = req.body;
 
       if (!name || typeof name !== 'string') {
@@ -54,11 +54,13 @@ export const instanceController = {
         });
       }
 
-      // Create instance first
+      // Create instance first with placeholder sessionName
+      const tempSessionName = `uid_${userId}_iid_temp_${Date.now()}`;
       const instance = await prisma.instance.create({
         data: {
           userId,
           name,
+          sessionName: tempSessionName,
         },
       });
 
@@ -77,10 +79,10 @@ export const instanceController = {
   },
 
   // GET /api/v1/instances/:id
-  getInstance: async (req: AuthRequest, res: Response) => {
+  getInstance: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const instance = await prisma.instance.findFirst({
         where: {
@@ -109,10 +111,10 @@ export const instanceController = {
   },
 
   // POST /api/v1/instances/:id/connect
-  connectInstance: async (req: AuthRequest, res: Response) => {
+  connectInstance: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const instance = await prisma.instance.findFirst({
         where: {
@@ -163,10 +165,10 @@ export const instanceController = {
   },
 
   // GET /api/v1/instances/:id/qr
-  getQRCode: async (req: AuthRequest, res: Response) => {
+  getQRCode: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const instance = await prisma.instance.findFirst({
         where: {
@@ -189,10 +191,10 @@ export const instanceController = {
   },
 
   // DELETE /api/v1/instances/:id
-  deleteInstance: async (req: AuthRequest, res: Response) => {
+  deleteInstance: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const instance = await prisma.instance.findFirst({
         where: {

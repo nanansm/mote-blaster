@@ -29,6 +29,7 @@ export async function addBlastJobs(
   delayVariation: boolean = false
 ) {
   const jobs = contacts.map((contact) => ({
+    name: 'send-message',
     data: {
       campaignId,
       instanceId,
@@ -39,6 +40,7 @@ export async function addBlastJobs(
       messageTemplate: template,
       delayVariation,
     },
+    opts: {} as any,
   }));
 
   // Add all jobs to queue with a staggered delay (10s minimum between messages)
@@ -48,9 +50,9 @@ export async function addBlastJobs(
     if (delayVariation) {
       // Add random variation between 10-30 seconds
       const variation = Math.floor(Math.random() * 20000) + 10000; // 10-30s
-      jobs[i].delay = delayMs + variation;
+      jobs[i].opts!.delay = delayMs + variation;
     } else {
-      jobs[i].delay = delayMs;
+      jobs[i].opts!.delay = delayMs;
     }
   }
 

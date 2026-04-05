@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { campaignController } from '../controllers/campaign.controller';
-import { authMiddleware, checkPlanLimit } from '../middlewares/auth.middleware';
+import { authMiddleware } from '../middlewares/auth.middleware';
+import { checkPlanLimit } from '../middlewares/plan.middleware';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { instanceController } from '../controllers/instance.controller';
-import { authMiddleware, checkPlanLimit } from '../middlewares/auth.middleware';
+import { authMiddleware } from '../middlewares/auth.middleware';
+import { checkPlanLimit } from '../middlewares/plan.middleware';
 
 const router = Router();
 

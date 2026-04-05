@@ -1,11 +1,11 @@
-import { Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
-import { AuthRequest } from '../middlewares/auth.middleware';
 import { xenditService } from '../services/xendit.service';
+import type { AuthRequest } from '../middlewares/auth.middleware';
 
 export const billingController = {
   // GET /api/v1/billing/plans
-  getPlans: async (req: AuthRequest, res: Response) => {
+  getPlans: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const proPrice = parseInt(process.env.XENDIT_PRO_PLAN_PRICE || '99000', 10);
 
@@ -46,9 +46,9 @@ export const billingController = {
   },
 
   // GET /api/v1/billing/subscription
-  getSubscription: async (req: AuthRequest, res: Response) => {
+  getSubscription: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const subscription = await prisma.subscription.findUnique({
         where: { userId },
@@ -62,9 +62,9 @@ export const billingController = {
   },
 
   // POST /api/v1/billing/subscribe
-  subscribe: async (req: AuthRequest, res: Response) => {
+  subscribe: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
       const { planId } = req.body;
 
       if (planId !== 'PRO') {
@@ -99,11 +99,21 @@ export const billingController = {
         customerId = customer.id;
       }
 
+      if (!customerId) {
+        return res.status(500).json({ error: 'Failed to create customer' });
+      }
+
       // Create recurring plan
       const plan = await xenditService.createRecurringPlan(customerId);
+      if (!plan || !plan.id) {
+        return res.status(500).json({ error: 'Failed to create plan' });
+      }
 
       // Create subscription
       const subscription = await xenditService.createSubscription(customerId, plan.id);
+      if (!subscription || !subscription.id) {
+        return res.status(500).json({ error: 'Failed to create subscription' });
+      }
 
       // Save subscription to DB
       await prisma.subscription.create({
@@ -122,8 +132,8 @@ export const billingController = {
 
       res.json({
         success: true,
-        paymentUrl: subscription.invoice_url,
-        subscriptionId: subscription.id,
+        paymentUrl: subscription.invoice_url!,
+        subscriptionId: subscription.id!,
       });
     } catch (error: any) {
       console.error('subscribe error:', error);
@@ -134,9 +144,9 @@ export const billingController = {
   },
 
   // POST /api/v1/billing/cancel
-  cancelSubscription: async (req: AuthRequest, res: Response) => {
+  cancelSubscription: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const subscription = await prisma.subscription.findUnique({
         where: { userId },
@@ -170,9 +180,9 @@ export const billingController = {
   },
 
   // GET /api/v1/billing/invoices
-  getInvoices: async (req: AuthRequest, res: Response) => {
+  getInvoices: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
+      const userId = (req as AuthRequest).user!.userId;
 
       const subscription = await prisma.subscription.findUnique({
         where: { userId },
@@ -205,9 +215,9 @@ export const billingController = {
   },
 
   // POST /api/v1/billing/webhook
-  webhook: async (req: Response, res: Response) => {
+  webhook: async (req: Request, res: Response) => {
     try {
-      const token = req.headers['x-callback-token'] as string;
+      const token = req.get('x-callback-token') ?? '';
 
       if (!xenditService.verifyWebhookToken(token)) {
         return res.status(400).json({ error: 'Invalid webhook token' });

@@ -1,15 +1,21 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from './auth.middleware';
+import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
+import type { AuthRequest } from './auth.middleware';
 
 export async function checkPlanLimit(
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
   try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: req.user?.userId },
+      where: { id: userId },
       include: {
         subscription: true,
       },
@@ -21,11 +27,11 @@ export async function checkPlanLimit(
 
     const plan = user.plan;
 
-    // Attach plan info to request for use in controllers
-    req.user = {
-      ...req.user!,
+    // Attach plan and subscription info to request for use in controllers
+    authReq.user = {
+      ...authReq.user!,
       plan,
-      subscription: user.subscription,
+      subscription: user.subscription ?? undefined,
     };
 
     next();
@@ -35,8 +41,9 @@ export async function checkPlanLimit(
   }
 }
 
-export function requireProPlan(req: AuthRequest, res: Response, next: NextFunction) {
-  if (req.user?.plan !== 'PRO') {
+export function requireProPlan(req: Request, res: Response, next: NextFunction) {
+  const authReq = req as AuthRequest;
+  if (authReq.user?.plan !== 'PRO') {
     return res.status(403).json({
       error: 'This feature requires a Pro plan',
       upgradeRequired: true,
