@@ -17,7 +17,6 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { toast } from 'sonner';
 import { Plus, Smartphone, Trash2, QrCode, RefreshCw } from 'lucide-react';
 import { Instance } from '../../types';
-import { cn } from '../../lib/utils';
 
 export default function WAConnection() {
   const { user } = useAuthStore();
@@ -42,7 +41,7 @@ export default function WAConnection() {
       const response = await api.post(`/instances/${instanceId}/connect`);
       return response.data;
     },
-    onSuccess: (data, instanceId) => {
+    onSuccess: (data, _instanceId) => {
       setSelectedInstance(data.instance);
       if (data.qrCode) {
         setQrCode(data.qrCode);

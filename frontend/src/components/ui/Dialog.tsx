@@ -82,7 +82,7 @@ const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 DialogFooter.displayName = 'DialogFooter';
 
 export {
-  DialogRoot,
+  DialogRoot as Dialog,
   DialogTrigger,
   DialogContent,
   DialogHeader,

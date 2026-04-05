@@ -51,6 +51,12 @@ export interface Contact {
   createdAt: string;
 }
 
+export interface ContactData {
+  phone: string;
+  name?: string;
+  [key: string]: string | undefined;
+}
+
 export interface MessageLog {
   id: string;
   campaignId: string;

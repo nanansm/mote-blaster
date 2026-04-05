@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../lib/axios';
@@ -15,12 +14,11 @@ import {
   DialogTitle,
 } from '../../components/ui/Dialog';
 import { toast } from 'sonner';
-import { Check, AlertCircle } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Subscription } from '../../types';
 
 export default function Billing() {
-  const navigate = useNavigate();
-  const { user, updatePlan } = useAuthStore();
+  const { updatePlan } = useAuthStore();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const { data: plans } = useQuery({
@@ -37,12 +35,13 @@ export default function Billing() {
       const response = await api.get('/billing/subscription');
       return response.data.subscription;
     },
-    onSuccess: (data) => {
-      if (data?.status === 'ACTIVE') {
-        updatePlan('PRO');
-      }
-    },
   });
+
+  useEffect(() => {
+    if (subscription?.status === 'ACTIVE') {
+      updatePlan('PRO');
+    }
+  }, [subscription, updatePlan]);
 
   const subscribeMutation = useMutation({
     mutationFn: async () => {
@@ -85,9 +84,6 @@ export default function Billing() {
         return <Badge>{status}</Badge>;
     }
   };
-
-  const freePlan = plans?.find((p: any) => p.id === 'FREE');
-  const proPlan = plans?.find((p: any) => p.id === 'PRO');
 
   return (
     <div className="space-y-6">

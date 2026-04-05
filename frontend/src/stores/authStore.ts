@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { api, checkAuth } from '../lib/axios';
+import { api } from '../lib/axios';
 import { User } from '../types';
 
 interface AuthState {

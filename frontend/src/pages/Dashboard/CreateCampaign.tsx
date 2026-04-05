@@ -1,18 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../lib/axios';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/Dialog';
-import { Skeleton } from '../../components/ui/Skeleton';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Upload, FileSpreadsheet, Send, Save } from 'lucide-react';
 import { Instance, ContactData } from '../../types';
@@ -28,7 +24,6 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function CreateCampaign() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
   const [step, setStep] = useState(1);
   const [messageTemplate, setMessageTemplate] = useState('');
   const [delayVariation, setDelayVariation] = useState(false);
@@ -45,13 +40,10 @@ export default function CreateCampaign() {
     },
   });
 
-  const connectedInstances = instances?.filter((i) => i.status === 'CONNECTED') || [];
-
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset,
     watch,
   } = useForm<FormData>({
     resolver: zodResolver(stepSchema),
@@ -100,9 +92,8 @@ export default function CreateCampaign() {
   // Step 3: Preview message
   const previewMessage = contacts.length > 0
     ? renderTemplate(messageTemplate, {
-        name: contacts[previewIndex]?.name || contacts[previewIndex]?.phone,
-        phone: contacts[previewIndex]?.phone,
-        ...contacts[previewIndex]?.variables,
+        ...contacts[previewIndex],
+        name: contacts[previewIndex]?.name || contacts[previewIndex]?.phone || '',
       })
     : '';
 

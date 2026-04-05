@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
-import { Button } from '../../components/ui/Button';
+import { useAuthStore } from '../stores/authStore';
+import { Button } from '../components/ui/Button';
+import { cn } from '../lib/utils';
 import { Check } from 'lucide-react';
 
 const features = [

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../stores/authStore';
@@ -27,7 +26,6 @@ import {
   Megaphone,
   ArrowUp,
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
 
 interface DailyData {
   date: string;
@@ -232,7 +230,7 @@ export default function Dashboard() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {pieData.map((entry, index) => (
+                      {pieData.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>

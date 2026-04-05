@@ -15,7 +15,7 @@ import {
 } from '../../components/ui/Select';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { toast } from 'sonner';
-import { Plus, MoreVertical, Play, Pause, Trash2 } from 'lucide-react';
+import { Plus, Play, Pause, Trash2 } from 'lucide-react';
 import { Campaign } from '../../types';
 import { cn } from '../../lib/utils';
 
@@ -31,6 +31,7 @@ const statusColors: Record<string, string> = {
 export default function Campaigns() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const isFree = user?.plan === 'FREE';
 
   const [page, setPage] = useState(1);
