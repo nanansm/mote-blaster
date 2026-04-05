@@ -1,4 +1,3 @@
-# Gunakan image Node 20 versi PENUH (bukan alpine, bukan slim)
 FROM node:20 AS builder
 WORKDIR /app
 
@@ -8,7 +7,6 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-# Gunakan image Node 20 versi PENUH untuk jalankan aplikasi
 FROM node:20
 WORKDIR /app
 
@@ -17,7 +15,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY package*.json ./
 
-RUN npm install prisma --save-dev
+# KUNCI RAHASIA: Paksa Docker menggunakan Prisma versi 5, bukan versi 7!
+RUN npm install prisma@5.22.0 --save-dev
 
 EXPOSE 3001
 
