@@ -61,9 +61,19 @@ app.use(passport.initialize());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 100, // limit each IP to 100 requests per minute
+  windowMs: 60 * 1000,
+  max: 500,
   message: { error: 'Too many requests, please try again later' },
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for'] as string || 
+           req.headers['x-real-ip'] as string || 
+           req.ip || 
+           'unknown';
+  },
+  skip: (req) => {
+    // Skip rate limiting for Google OAuth callback
+    return req.path.includes('/auth/google');
+  },
 });
 app.use('/api/', limiter);
 
