@@ -1,5 +1,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
+# Install openssl for Prisma
+RUN apk add --no-cache openssl ca-certificates
 COPY backend/package*.json ./
 RUN npm ci
 COPY backend/ .
@@ -8,6 +10,8 @@ RUN npm run build
 
 FROM node:20-alpine
 WORKDIR /app
+# Install openssl for Prisma runtime
+RUN apk add --no-cache openssl ca-certificates
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma

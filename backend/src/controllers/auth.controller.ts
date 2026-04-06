@@ -3,6 +3,8 @@ import cookie from 'cookie';
 import { prisma } from '../config/database';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 export const authController = {
   // GET /api/v1/auth/google
   googleAuth: (req: Request, res: Response) => {
@@ -17,7 +19,7 @@ export const authController = {
       const user = req.user as { userId: string; email: string; plan: string } | undefined;
 
       if (!user) {
-        return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+        return res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
       }
 
       const accessToken = generateAccessToken({
@@ -54,10 +56,10 @@ export const authController = {
         }),
       ]);
 
-      return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+      return res.redirect(`${FRONTEND_URL}/dashboard`);
     } catch (error) {
       console.error('googleCallback error:', error);
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
+      return res.redirect(`${FRONTEND_URL}/login?error=server_error`);
     }
   },
 

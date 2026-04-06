@@ -1,3 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { validateEnv } from './config/validateEnv';
+validateEnv();
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -5,7 +13,6 @@ import rateLimit from 'express-rate-limit';
 import passport from 'passport';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import dotenv from 'dotenv';
 import { prisma } from './config/database';
 import { initializePassport } from './config/passport';
 import { redis } from './config/redis';
@@ -20,8 +27,6 @@ import campaignRoutes from './routes/campaign.routes';
 import billingRoutes from './routes/billing.routes';
 import { errorMiddleware } from './middlewares/error.middleware';
 
-dotenv.config();
-
 // Extend Socket interface to include userId
 declare module 'socket.io' {
   interface Socket {
@@ -35,7 +40,7 @@ const httpServer = createServer(app);
 // Socket.io setup
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: FRONTEND_URL,
     credentials: true,
   },
 });
@@ -48,7 +53,7 @@ initializePassport();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: FRONTEND_URL,
   credentials: true,
 }));
 

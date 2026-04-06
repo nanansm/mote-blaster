@@ -1,19 +1,27 @@
 import { google } from 'googleapis';
 import { ContactData } from '../utils/csvParser';
 
-const GOOGLE_SERVICE_ACCOUNT_JSON = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+let sheets: ReturnType<typeof google.sheets> | null = null;
 
-if (!GOOGLE_SERVICE_ACCOUNT_JSON) {
-  throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON environment variable is required');
+function getSheets() {
+  if (sheets) return sheets;
+
+  const GOOGLE_SERVICE_ACCOUNT_JSON = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+
+  if (!GOOGLE_SERVICE_ACCOUNT_JSON) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON environment variable is required for Google Sheets integration');
+  }
+
+  sheets = google.sheets({
+    version: 'v4',
+    auth: new google.auth.GoogleAuth({
+      credentials: JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    }),
+  });
+
+  return sheets;
 }
-
-const sheets = google.sheets({
-  version: 'v4',
-  auth: new google.auth.GoogleAuth({
-    credentials: JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-  }),
-});
 
 export function extractSpreadsheetId(url: string): string | null {
   const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
@@ -22,6 +30,7 @@ export function extractSpreadsheetId(url: string): string | null {
 
 export async function fetchSheetData(spreadsheetId: string): Promise<ContactData[]> {
   try {
+    const sheets = getSheets();
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: 'A:Z',
