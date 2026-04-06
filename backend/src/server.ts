@@ -35,6 +35,7 @@ declare module 'socket.io' {
 }
 
 const app = express();
+app.set('trust proxy', 1);
 const httpServer = createServer(app);
 
 // Socket.io setup
@@ -53,7 +54,7 @@ initializePassport();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: FRONTEND_URL.replace(/\/$/, ''),
   credentials: true,
 }));
 
@@ -70,10 +71,9 @@ const limiter = rateLimit({
   max: 500,
   message: { error: 'Too many requests, please try again later' },
   keyGenerator: (req) => {
-    return req.headers['x-forwarded-for'] as string || 
-           req.headers['x-real-ip'] as string || 
-           req.ip || 
-           'unknown';
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0];
+    return ip || req.ip || 'unknown';
   },
   skip: (req) => {
     // Skip rate limiting for Google OAuth callback

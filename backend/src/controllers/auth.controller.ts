@@ -15,8 +15,7 @@ export const authController = {
   // GET /api/v1/auth/google/callback
   googleCallback: async (req: Request, res: Response) => {
     try {
-      // @ts-ignore
-      const user = req.user as { userId: string; email: string; plan: string } | undefined;
+      const user = (req.user as unknown) as { userId: string; email: string; plan: string } | undefined;
 
       if (!user) {
         return res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
