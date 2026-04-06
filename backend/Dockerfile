@@ -20,4 +20,4 @@ RUN npm install prisma@5.22.0 --save-dev
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+CMD ["sh", "-c", "npx prisma db push && node dist/server.js"]
