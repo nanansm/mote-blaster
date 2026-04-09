@@ -24,8 +24,12 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static     ./.next/static
 COPY --from=builder /app/public           ./public
 
+# Migration assets
+COPY --from=builder /app/drizzle          ./drizzle
+COPY --from=builder /app/migrate.js       ./migrate.js
+
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/health || exit 1
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node migrate.js && node server.js"]
