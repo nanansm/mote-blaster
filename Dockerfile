@@ -25,8 +25,9 @@ COPY --from=builder /app/.next/static     ./.next/static
 COPY --from=builder /app/public           ./public
 
 # Migration assets
-COPY --from=builder /app/drizzle          ./drizzle
-COPY --from=builder /app/migrate.js       ./migrate.js
+COPY --from=builder /app/drizzle                        ./drizzle
+COPY --from=builder /app/migrate.js                     ./migrate.js
+COPY --from=builder /app/node_modules/bcryptjs          ./node_modules/bcryptjs
 
 EXPOSE 3000
 

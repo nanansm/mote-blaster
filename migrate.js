@@ -1,10 +1,31 @@
 // Plain CJS migration runner — no drizzle-kit, no TypeScript.
 // Runs all pending SQL files from ./drizzle/migrations/ in order.
 // Each SQL file uses "--> statement-breakpoint" to delimit statements.
+// After migrations, seeds the owner account if ADMIN_EMAIL + ADMIN_PASSWORD are set.
 
-const { Pool } = require('pg')
-const fs = require('fs')
-const path = require('path')
+const { Pool }                  = require('pg')
+const fs                        = require('fs')
+const path                      = require('path')
+const { randomBytes, scrypt }   = require('node:crypto')
+const { randomUUID }            = require('node:crypto')
+
+// Hash password dengan Scrypt — algoritma yang sama dengan better-auth
+// Format output: "salt:key" (hex)
+function hashPassword(password) {
+  return new Promise((resolve, reject) => {
+    const salt = randomBytes(16).toString('hex')
+    scrypt(
+      password.normalize('NFKC'),
+      salt,
+      64,
+      { N: 16384, r: 16, p: 1, maxmem: 128 * 16384 * 16 * 2 },
+      (err, key) => {
+        if (err) reject(err)
+        else resolve(`${salt}:${key.toString('hex')}`)
+      }
+    )
+  })
+}
 
 async function main() {
   if (!process.env.DATABASE_URL) {
@@ -79,6 +100,50 @@ async function main() {
     }
 
     console.log(`[migrate] done — ${count} migration(s) applied`)
+
+    // ── Seed owner ──────────────────────────────────────────────────────
+    const adminEmail    = process.env.ADMIN_EMAIL
+    const adminPassword = process.env.ADMIN_PASSWORD
+
+    if (adminEmail && adminPassword) {
+      console.log(`[migrate] seeding owner: ${adminEmail}`)
+
+      const { rows: existing } = await pool.query(
+        `SELECT id FROM "user" WHERE email = $1 LIMIT 1`,
+        [adminEmail]
+      )
+
+      if (existing.length > 0) {
+        // Update password jika owner sudah ada
+        const hash = await hashPassword(adminPassword)
+        await pool.query(
+          `UPDATE account SET password = $1 WHERE user_id = $2`,
+          [hash, existing[0].id]
+        )
+        console.log(`[migrate] owner password updated`)
+      } else {
+        // Insert owner baru
+        const hash    = await hashPassword(adminPassword)
+        const userId  = randomUUID()
+        const now     = new Date().toISOString()
+
+        await pool.query(
+          `INSERT INTO "user" (id, name, email, email_verified, plan, role, created_at, updated_at)
+           VALUES ($1, $2, $3, true, 'free', 'owner', $4, $4)
+           ON CONFLICT DO NOTHING`,
+          [userId, 'Owner', adminEmail, now]
+        )
+        await pool.query(
+          `INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at)
+           VALUES ($1, $2, 'credential', $3, $4, $5, $5)
+           ON CONFLICT DO NOTHING`,
+          [randomUUID(), adminEmail, userId, hash, now]
+        )
+        console.log(`[migrate] owner created: ${adminEmail}`)
+      }
+    } else {
+      console.log('[migrate] ADMIN_EMAIL/ADMIN_PASSWORD not set, skipping owner seed')
+    }
   } finally {
     await pool.end()
   }
