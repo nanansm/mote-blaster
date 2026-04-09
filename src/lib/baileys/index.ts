@@ -186,6 +186,32 @@ export async function sendMessage(
   await e.socket.sendMessage(jid, { text: message })
 }
 
+// ── restoreSessions ───────────────────────────────────────────────────
+export async function restoreSessions(): Promise<void> {
+  const { ne } = await import('drizzle-orm')
+
+  const activeInstances = await db
+    .select({ sessionName: instances.sessionName, userId: instances.userId, id: instances.id })
+    .from(instances)
+    .where(ne(instances.status, 'disconnected'))
+
+  if (activeInstances.length === 0) return
+
+  console.log(`[Baileys] Restoring ${activeInstances.length} session(s)...`)
+
+  for (const inst of activeInstances) {
+    try {
+      await startSession(inst.sessionName, inst.userId, inst.id)
+    } catch (e) {
+      console.error(`[Baileys] Restore ${inst.sessionName}:`, e)
+    }
+    // Delay antar session agar tidak spike CPU
+    await new Promise((r) => setTimeout(r, 2_000))
+  }
+
+  console.log('[Baileys] Session restore complete')
+}
+
 // ── getAllSessions ─────────────────────────────────────────────────────
 export function getAllSessions(): Array<{
   sessionName: string
