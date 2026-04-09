@@ -1,110 +1,36 @@
-# Mote Blaster
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A SaaS WhatsApp bulk messaging platform built with React, Node.js, and Prisma.
+## Getting Started
 
-## Tech Stack
-
-- **Frontend**: React 18 + Vite + TypeScript, TailwindCSS, shadcn/ui, TanStack Query, Zustand
-- **Backend**: Express + TypeScript, Prisma ORM, PostgreSQL, Redis + Bull, Socket.io
-- **Integrations**: WPPConnect Server, Google OAuth, Xendit Payments, Google Sheets
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js 20+
-- PostgreSQL 15
-- Redis 7
-- WPPConnect Server
-- Google Cloud OAuth credentials
-- Xendit account
-
-### Local Development
-
-1. Clone the repository and install dependencies:
+First, run the development server:
 
 ```bash
-# Backend
-cd backend
-npm install
-npx prisma generate
-
-# Frontend
-cd ../frontend
-npm install
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-2. Set up environment variables:
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-```bash
-# Backend .env
-cp backend/.env.example backend/.env
-# Edit backend/.env with your values
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-# Frontend .env
-cp frontend/.env.example frontend/.env
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-3. Start with Docker Compose (recommended):
+## Learn More
 
-```bash
-docker-compose up -d
-```
+To learn more about Next.js, take a look at the following resources:
 
-This will start:
-- PostgreSQL on port 5432
-- Redis on port 6379
-- WPPConnect on port 21465
-- Backend API on port 3001
-- Frontend on port 5173
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-4. Run migrations:
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-```bash
-docker-compose exec backend npx prisma migrate dev
-```
+## Deploy on Vercel
 
-5. Access the app at http://localhost:5173
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## Project Structure
-
-```
-mote-blaster/
-├── frontend/           # React + Vite app
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── stores/
-│   │   └── lib/
-│   └── public/
-├── backend/            # Express API
-│   ├── src/
-│   │   ├── config/
-│   │   ├── controllers/
-│   │   ├── middlewares/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   └── utils/
-│   └── prisma/
-├── docker-compose.yml
-└── README.md
-```
-
-## Features
-
-- Google OAuth 2.0 authentication
-- WhatsApp instance management via WPPConnect
-- Campaign creation with CSV/Google Sheets import
-- Personalized message templates with variable substitution
-- Real-time campaign progress tracking
-- Rate-limited message sending (10s minimum delay)
-- Subscription billing via Xendit
-- Free and Pro tier plans
-
-## Deployment
-
-Deploy to Easypanel following Section 11 of the PRD.
-
-## License
-
-Proprietary - All rights reserved
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
