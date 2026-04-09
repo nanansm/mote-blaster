@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports: ["3000:3000"]
+    environment:
+      DATABASE_URL:                postgres://postgres:postgres@db:5432/mote
+      REDIS_URL:                   redis://redis:6379
+      BETTER_AUTH_SECRET:          dev_secret_32_chars_minimum_ganti_ini
+      BETTER_AUTH_URL:             http://localhost:3000
+      NEXT_PUBLIC_APP_URL:         http://localhost:3000
+      GOOGLE_CLIENT_ID:            ${GOOGLE_CLIENT_ID:-placeholder}
+      GOOGLE_CLIENT_SECRET:        ${GOOGLE_CLIENT_SECRET:-placeholder}
+      GOOGLE_SERVICE_ACCOUNT_JSON: '{"type":"service_account","project_id":"placeholder"}'
+      WPPCONNECT_BASE_URL:         http://wppconnect:21465
+      WPPCONNECT_SECRET_KEY:       local_secret
+      XENDIT_SECRET_KEY:           xnd_dev_placeholder
+      XENDIT_WEBHOOK_TOKEN:        local_token
+      XENDIT_PRO_PLAN_PRICE:       "99000"
+      FREE_PLAN_DAILY_LIMIT:       "50"
+      FREE_PLAN_MAX_INSTANCES:     "1"
+      FREE_PLAN_MAX_CAMPAIGNS:     "2"
+      MIN_DELAY_SECONDS:           "10"
+      ADMIN_EMAIL:                 ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD:              ${ADMIN_PASSWORD:-changeme}
+    depends_on:
+      db:    { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mote
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mote"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly no --save ""
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  wppconnect:
+    image: wppconnect/server:latest
+    restart: unless-stopped
+    ports: ["21465:21465"]
+    environment:
+      SECRET_KEY: local_secret
+      HOST: 0.0.0.0
+    volumes: [wppdata:/usr/src/wppconnect/userDataDir]
+
+volumes:
+  pgdata:
+  redisdata:
+  wppdata:

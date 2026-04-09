@@ -1,0 +1,7 @@
+export type Plan = 'free' | 'pro'
+export type Role = 'user' | 'owner'
+export type InstanceStatus = 'disconnected' | 'connecting' | 'qr_code' | 'connected' | 'error'
+export type CampaignStatus = 'draft' | 'pending' | 'running' | 'completed' | 'failed' | 'paused'
+export type MessageStatus = 'pending' | 'sent' | 'failed' | 'skipped'
+export type ContactSource = 'csv' | 'google_sheets'
+export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'unpaid'
