@@ -3,14 +3,17 @@ export async function register() {
     const { startWorker } = await import('./lib/queue/worker')
     await startWorker()
 
-    // Delay restore sessions agar server sempat ready dulu
-    setTimeout(async () => {
-      try {
-        const { restoreSessions } = await import('./lib/baileys/index')
-        await restoreSessions()
-      } catch (e) {
-        console.error('[Session] Restore error:', e)
-      }
-    }, 10_000) // tunggu 10 detik setelah server ready
+    // Jangan restore sessions di production saat startup —
+    // user connect manual via dashboard, mencegah memory spike
+    if (process.env.NODE_ENV !== 'production') {
+      setTimeout(async () => {
+        try {
+          const { restoreSessions } = await import('./lib/baileys/index')
+          await restoreSessions()
+        } catch (e) {
+          console.error('[Session] Restore error:', e)
+        }
+      }, 10_000)
+    }
   }
 }

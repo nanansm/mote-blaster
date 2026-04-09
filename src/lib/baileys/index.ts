@@ -88,12 +88,16 @@ export async function startSession(
       creds: state.creds,
       keys:  makeCacheableSignalKeyStore(state.keys, silentLogger),
     },
-    printQRInTerminal: false,
-    browser: ['Mote Blaster', 'Chrome', '1.0'],
-    connectTimeoutMs:  60_000,
-    defaultQueryTimeoutMs: 30_000,
-    keepAliveIntervalMs:   25_000,
-    logger: silentLogger,
+    logger:                      silentLogger,
+    printQRInTerminal:           false,
+    browser:                     ['Mote Blaster', 'Chrome', '1.0'],
+    connectTimeoutMs:            60_000,
+    defaultQueryTimeoutMs:       30_000,
+    keepAliveIntervalMs:         25_000,
+    generateHighQualityLinkPreview: false,
+    syncFullHistory:             false,
+    markOnlineOnConnect:         false,
+    getMessage:                  async () => undefined,
   })
 
   const entry: SessionEntry = {
