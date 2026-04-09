@@ -15,6 +15,18 @@ async function main() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 
   try {
+    // Drop all tables from old/incompatible schema for a clean start
+    await pool.query(`
+      DROP TABLE IF EXISTS
+        message_logs, contacts, campaigns, instances,
+        daily_usage, subscriptions,
+        verification, account, session, "user",
+        refresh_tokens, accounts, users, sessions,
+        _migrations
+      CASCADE
+    `)
+    console.log('[migrate] dropped old tables')
+
     // Create tracking table (idempotent)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS _migrations (
