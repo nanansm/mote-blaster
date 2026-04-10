@@ -36,43 +36,29 @@ async function main() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 
   try {
-    // Drop all tables from old/incompatible schema for a clean start
+    // Create tracking table (idempotent) — never DROP existing tables
     await pool.query(`
-      DROP TABLE IF EXISTS
-        message_logs, contacts, campaigns, instances,
-        daily_usage, subscriptions,
-        verification, account, session, "user",
-        refresh_tokens, accounts, users, sessions,
-        _migrations
-      CASCADE
-    `)
-    console.log('[migrate] dropped old tables')
-
-    // Create tracking table (idempotent)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS _migrations (
+      CREATE TABLE IF NOT EXISTS __drizzle_migrations (
         id         SERIAL PRIMARY KEY,
-        tag        TEXT UNIQUE NOT NULL,
-        applied_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT
+        hash       TEXT NOT NULL UNIQUE,
+        created_at BIGINT
       )
     `)
 
-    const { rows: applied } = await pool.query('SELECT tag FROM _migrations ORDER BY id')
-    const done = new Set(applied.map((r) => r.tag))
+    const { rows: applied } = await pool.query('SELECT hash FROM __drizzle_migrations ORDER BY id')
+    const done = new Set(applied.map((r) => r.hash))
 
     const dir = path.join(__dirname, 'drizzle', 'migrations')
     const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()
 
     let count = 0
     for (const file of files) {
-      const tag = file.replace('.sql', '')
-
-      if (done.has(tag)) {
+      if (done.has(file)) {
         console.log('[migrate] skip   ', file)
         continue
       }
 
-      console.log('[migrate] running', file)
+      console.log('[migrate] running ', file)
       const sql = fs.readFileSync(path.join(dir, file), 'utf8')
 
       // Drizzle separates statements with "--> statement-breakpoint"
@@ -94,7 +80,10 @@ async function main() {
         }
       }
 
-      await pool.query('INSERT INTO _migrations (tag) VALUES ($1)', [tag])
+      await pool.query(
+        'INSERT INTO __drizzle_migrations (hash, created_at) VALUES ($1, $2)',
+        [file, Date.now()]
+      )
       console.log('[migrate] applied', file)
       count++
     }

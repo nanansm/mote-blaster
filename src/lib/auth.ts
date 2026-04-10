@@ -29,5 +29,8 @@ export const auth = betterAuth({
       role: { type: 'string', defaultValue: 'user', required: false, input: false },
     },
   },
-  trustedOrigins: [process.env.BETTER_AUTH_URL!],
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ].filter((v): v is string => Boolean(v)),
 })
