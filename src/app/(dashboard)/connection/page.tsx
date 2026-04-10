@@ -84,16 +84,16 @@ export default function ConnectionPage() {
   const instances = data?.data ?? []
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800">WhatsApp Instances</h1>
-        <Button onClick={() => setShowNew(true)}>
+        <h1 className="text-xl md:text-2xl font-semibold text-slate-800">WhatsApp Instances</h1>
+        <Button onClick={() => setShowNew(true)} className="min-h-[44px]">
           <Plus size={16} className="mr-2" /> Tambah Instance
         </Button>
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(2)].map((_, i) => <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />)}
         </div>
       ) : instances.length === 0 ? (
@@ -103,35 +103,37 @@ export default function ConnectionPage() {
           <p className="text-sm mt-1">Klik tombol di atas untuk menambahkan instance WhatsApp</p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {instances.map((inst: any) => (
-            <div key={inst.id} className="rounded-xl border border-slate-200 bg-white p-5 flex items-center justify-between gap-4">
+            <div key={inst.id} className="rounded-xl border border-slate-200 bg-white p-4 md:p-5 space-y-3">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
                   {inst.status === 'connected' ? <Wifi size={20} className="text-green-600" /> : <WifiOff size={20} className="text-slate-400" />}
                 </div>
-                <div>
-                  <p className="font-semibold text-slate-800">{inst.name}</p>
-                  <p className="text-xs text-slate-400">{inst.phoneNumber ?? inst.sessionName}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800 truncate">{inst.name}</p>
+                  <p className="text-xs text-slate-400 truncate">{inst.phoneNumber ?? inst.sessionName}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center flex-wrap gap-2">
                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColor[inst.status] ?? ''}`}>
                   {inst.status}
                 </span>
-                {inst.status !== 'connected' && (
-                  <Button size="sm" variant="outline" onClick={() => connectMutation.mutate(inst.id)} disabled={connectMutation.isPending}>
-                    <QrCode size={14} className="mr-1" /> Connect
+                <div className="flex items-center gap-2 ml-auto">
+                  {inst.status !== 'connected' && (
+                    <Button size="sm" variant="outline" onClick={() => connectMutation.mutate(inst.id)} disabled={connectMutation.isPending} className="min-h-[36px]">
+                      <QrCode size={14} className="mr-1" /> Connect
+                    </Button>
+                  )}
+                  {inst.status === 'connected' && (
+                    <Button size="sm" variant="outline" onClick={() => connectMutation.mutate(inst.id)} className="min-h-[36px]">
+                      <RefreshCw size={14} className="mr-1" /> Refresh
+                    </Button>
+                  )}
+                  <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(inst.id)} className="min-h-[36px]">
+                    <Trash2 size={14} />
                   </Button>
-                )}
-                {inst.status === 'connected' && (
-                  <Button size="sm" variant="outline" onClick={() => connectMutation.mutate(inst.id)}>
-                    <RefreshCw size={14} className="mr-1" /> Refresh
-                  </Button>
-                )}
-                <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(inst.id)}>
-                  <Trash2 size={14} />
-                </Button>
+                </div>
               </div>
             </div>
           ))}
@@ -151,7 +153,7 @@ export default function ConnectionPage() {
               onChange={e => setNewName(e.target.value)}
             />
             <Button
-              className="w-full"
+              className="w-full min-h-[44px]"
               onClick={() => createMutation.mutate()}
               disabled={!newName.trim() || createMutation.isPending}
             >
@@ -170,7 +172,7 @@ export default function ConnectionPage() {
           <div className="flex flex-col items-center py-4">
             {qrModal.qrCode && (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={qrModal.qrCode} alt="QR Code" className="w-64 h-64" />
+              <img src={qrModal.qrCode} alt="QR Code" className="w-56 h-56 md:w-64 md:h-64" />
             )}
             <p className="text-sm text-slate-500 mt-4 text-center">
               Buka WhatsApp → Perangkat Tertaut → Tautkan Perangkat → Scan QR

@@ -34,7 +34,7 @@ export default function NewCampaignPage() {
   const [name, setName]             = useState('')
   const [instanceId, setInstanceId] = useState('')
 
-  // Step 2 — simpan SEMUA kontak, bukan hanya preview
+  // Step 2
   const [source, setSource]         = useState<Source>('')
   const [sheetUrl, setSheetUrl]     = useState('')
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
@@ -50,7 +50,6 @@ export default function NewCampaignPage() {
   })
   const instances = (instData?.data ?? []).filter((i: any) => i.status === 'connected')
 
-  // ── Download template CSV ──────────────────────────────────────────
   const handleDownloadTemplate = () => {
     const csv  = 'phone,name,custom1\n628123456789,Budi,nilai1\n08987654321,Siti,nilai2\n'
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -60,7 +59,6 @@ export default function NewCampaignPage() {
     URL.revokeObjectURL(url)
   }
 
-  // ── Upload CSV ────────────────────────────────────────────────────
   const handleCSVUpload = async (file: File) => {
     const form = new FormData()
     form.append('file', file)
@@ -68,14 +66,13 @@ export default function NewCampaignPage() {
       const res  = await fetch('/api/campaigns/upload-csv', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error); return }
-      setParseResult(data)   // data.rows berisi semua kontak
+      setParseResult(data)
       setSource('csv')
     } catch {
       toast.error('Gagal upload CSV')
     }
   }
 
-  // ── Fetch Google Sheets ──────────────────────────────────────────
   const handleSheetFetch = async () => {
     if (!sheetUrl.trim()) return
     setLoading(true)
@@ -87,7 +84,7 @@ export default function NewCampaignPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setParseResult(data)   // data.rows berisi semua kontak
+      setParseResult(data)
       setSource('google_sheets')
     } catch (e: any) {
       toast.error(e.message)
@@ -96,7 +93,6 @@ export default function NewCampaignPage() {
     }
   }
 
-  // ── Submit ────────────────────────────────────────────────────────
   const handleSubmit = async (isDraft = false) => {
     if (!parseResult || parseResult.rows.length === 0) {
       toast.error('Tidak ada kontak. Upload CSV atau ambil dari Google Sheets dulu.')
@@ -104,7 +100,6 @@ export default function NewCampaignPage() {
     }
     setLoading(true)
     try {
-      // Kirim campaign + semua contacts dalam satu request
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,7 +109,7 @@ export default function NewCampaignPage() {
           messageTemplate: template,
           contactSource:   source,
           contactsCount:   parseResult.rows.length,
-          contacts:        parseResult.rows,   // ← ini yang sebelumnya hilang
+          contacts:        parseResult.rows,
         }),
       })
       const campaign = await res.json()
@@ -140,29 +135,29 @@ export default function NewCampaignPage() {
   const steps = ['Basic Info', 'Contacts', 'Message', 'Review']
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-800">Buat Campaign Baru</h1>
+    <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-5 md:space-y-6">
+      <h1 className="text-xl md:text-2xl font-semibold text-slate-800">Buat Campaign Baru</h1>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
         {steps.map((s, i) => (
-          <div key={s} className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+          <div key={s} className="flex items-center gap-1.5 md:gap-2">
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
               i + 1 < step  ? 'bg-green-500 text-white' :
               i + 1 === step ? 'bg-blue-600 text-white' :
               'bg-slate-100 text-slate-400'
             }`}>
               {i + 1 < step ? <CheckCircle size={14} /> : i + 1}
             </div>
-            <span className={`text-sm ${i + 1 === step ? 'font-medium text-slate-800' : 'text-slate-400'}`}>{s}</span>
+            <span className={`text-sm hidden sm:inline ${i + 1 === step ? 'font-medium text-slate-800' : 'text-slate-400'}`}>{s}</span>
             {i < steps.length - 1 && <ChevronRight size={14} className="text-slate-300" />}
           </div>
         ))}
       </div>
 
-      {/* ── Step 1: Basic Info ────────────────────────────────��────── */}
+      {/* Step 1: Basic Info */}
       {step === 1 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-4">
           <h2 className="font-semibold text-slate-800">Informasi Dasar</h2>
           <div>
             <label className="text-sm text-slate-600 mb-1 block">Nama Campaign</label>
@@ -183,21 +178,21 @@ export default function NewCampaignPage() {
               </Select>
             )}
           </div>
-          <Button className="w-full" onClick={() => setStep(2)} disabled={!name || !instanceId}>
+          <Button className="w-full min-h-[44px]" onClick={() => setStep(2)} disabled={!name || !instanceId}>
             Lanjut <ChevronRight size={16} className="ml-1" />
           </Button>
         </div>
       )}
 
-      {/* ── Step 2: Import Kontak ──────────────────────────────────── */}
+      {/* Step 2: Import Kontak */}
       {step === 2 && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-4">
             <h2 className="font-semibold text-slate-800">Import Kontak</h2>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Upload CSV */}
-              <label className={`flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-colors ${
+              <label className={`flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-colors min-h-[100px] ${
                 source === 'csv' ? 'border-blue-500 bg-blue-50' : 'border-dashed border-slate-200 hover:border-slate-300'
               }`}>
                 <Upload size={20} className="text-slate-400" />
@@ -219,13 +214,12 @@ export default function NewCampaignPage() {
                   onChange={e => setSheetUrl(e.target.value)}
                   className="text-xs"
                 />
-                <Button size="sm" variant="outline" onClick={handleSheetFetch} disabled={loading}>
+                <Button size="sm" variant="outline" onClick={handleSheetFetch} disabled={loading} className="min-h-[40px]">
                   {loading ? 'Loading...' : 'Ambil Data'}
                 </Button>
               </div>
             </div>
 
-            {/* Hasil parse */}
             {parseResult && (
               <div className="rounded-lg bg-green-50 border border-green-200 p-3">
                 <p className="text-sm font-medium text-green-700">✓ {parseResult.totalCount} kontak ditemukan</p>
@@ -234,17 +228,17 @@ export default function NewCampaignPage() {
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(1)}><ChevronLeft size={16} className="mr-1" /> Back</Button>
-              <Button className="flex-1" onClick={() => setStep(3)} disabled={!parseResult}>
+              <Button variant="outline" onClick={() => setStep(1)} className="min-h-[44px]"><ChevronLeft size={16} className="mr-1" /> Back</Button>
+              <Button className="flex-1 min-h-[44px]" onClick={() => setStep(3)} disabled={!parseResult}>
                 Lanjut <ChevronRight size={16} className="ml-1" />
               </Button>
             </div>
           </div>
 
-          {/* ── Tutorial CSV ──────────────────────────────────────── */}
+          {/* Tutorial CSV */}
           <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <Info size={16} className="text-blue-600 flex-shrink-0" />
+              <Info size={16} className="text-blue-600 shrink-0" />
               <h3 className="text-sm font-semibold text-blue-800">Format CSV yang Benar</h3>
             </div>
             <ul className="text-xs text-blue-700 space-y-1 ml-5 list-disc">
@@ -268,10 +262,10 @@ export default function NewCampaignPage() {
             </Button>
           </div>
 
-          {/* ── Tutorial Google Sheets ────────────────────────────── */}
+          {/* Tutorial Google Sheets */}
           <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <Info size={16} className="text-blue-600 flex-shrink-0" />
+              <Info size={16} className="text-blue-600 shrink-0" />
               <h3 className="text-sm font-semibold text-blue-800">Cara Pakai Google Sheets</h3>
             </div>
             <ul className="text-xs text-blue-700 space-y-1 ml-5 list-disc">
@@ -280,22 +274,19 @@ export default function NewCampaignPage() {
               <li>Pastikan sharing sheet diset ke: <strong>"Anyone with the link can view"</strong></li>
               <li>Copy URL sheet dari address bar browser</li>
             </ul>
-            <div>
-              <p className="text-xs font-medium text-blue-700 mb-1">Langkah-langkah:</p>
-              <ol className="text-xs text-blue-700 space-y-0.5 ml-4 list-decimal">
-                <li>Buka Google Sheets kamu</li>
-                <li>Klik <strong>Share</strong> → Anyone with the link → <strong>Viewer</strong></li>
-                <li>Copy link → Paste di kolom URL di atas</li>
-                <li>Klik <strong>"Ambil Data"</strong></li>
-              </ol>
-            </div>
+            <ol className="text-xs text-blue-700 space-y-0.5 ml-4 list-decimal">
+              <li>Buka Google Sheets kamu</li>
+              <li>Klik <strong>Share</strong> → Anyone with the link → <strong>Viewer</strong></li>
+              <li>Copy link → Paste di kolom URL di atas</li>
+              <li>Klik <strong>"Ambil Data"</strong></li>
+            </ol>
           </div>
         </div>
       )}
 
-      {/* ── Step 3: Template ──────────────────────────────────────── */}
+      {/* Step 3: Template */}
       {step === 3 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-4">
           <h2 className="font-semibold text-slate-800">Template Pesan</h2>
           <p className="text-xs text-slate-500">
             Gunakan <code className="bg-slate-100 px-1 rounded">{'{{variabel}}'}</code> untuk personalisasi.
@@ -324,17 +315,17 @@ export default function NewCampaignPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(2)}><ChevronLeft size={16} className="mr-1" /> Back</Button>
-            <Button className="flex-1" onClick={() => setStep(4)} disabled={!template.trim()}>
+            <Button variant="outline" onClick={() => setStep(2)} className="min-h-[44px]"><ChevronLeft size={16} className="mr-1" /> Back</Button>
+            <Button className="flex-1 min-h-[44px]" onClick={() => setStep(4)} disabled={!template.trim()}>
               Lanjut <ChevronRight size={16} className="ml-1" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* ── Step 4: Review ────────────────────────────────────────── */}
+      {/* Step 4: Review */}
       {step === 4 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-4">
           <h2 className="font-semibold text-slate-800">Review & Kirim</h2>
           <div className="space-y-0 text-sm divide-y divide-slate-100">
             {[
@@ -353,7 +344,6 @@ export default function NewCampaignPage() {
             ))}
           </div>
 
-          {/* Preview 3 kontak pertama */}
           {parseResult && parseResult.preview.length > 0 && (
             <div className="rounded-lg bg-slate-50 border border-slate-100 p-3">
               <p className="text-xs font-medium text-slate-500 mb-2">Preview kontak (3 pertama):</p>
@@ -367,14 +357,14 @@ export default function NewCampaignPage() {
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={() => setStep(3)}>
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <Button variant="outline" onClick={() => setStep(3)} className="min-h-[44px]">
               <ChevronLeft size={16} className="mr-1" /> Back
             </Button>
-            <Button variant="outline" className="flex-1" onClick={() => handleSubmit(true)} disabled={loading}>
+            <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => handleSubmit(true)} disabled={loading}>
               Simpan Draft
             </Button>
-            <Button className="flex-1" onClick={() => handleSubmit(false)} disabled={loading}>
+            <Button className="flex-1 min-h-[44px]" onClick={() => handleSubmit(false)} disabled={loading}>
               {loading ? 'Mengirim...' : 'Kirim Sekarang'}
             </Button>
           </div>

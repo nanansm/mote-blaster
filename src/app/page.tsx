@@ -8,11 +8,11 @@ export default function LandingPage() {
       <nav className="border-b border-slate-100 sticky top-0 bg-white z-10">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <span className="text-xl font-bold text-blue-600">Mote Blaster</span>
-          <div className="flex gap-3">
-            <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+          <div className="flex gap-2 md:gap-3">
+            <Link href="/login" className="px-3 md:px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors min-h-[44px] flex items-center">
               Login
             </Link>
-            <Link href="/login" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+            <Link href="/login" className="px-3 md:px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] flex items-center">
               Get Started
             </Link>
           </div>
@@ -20,23 +20,23 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="py-24 px-4 text-center bg-gradient-to-b from-blue-50 to-white">
+      <section className="py-16 md:py-24 px-4 text-center bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-3xl mx-auto">
           <span className="inline-block px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full mb-4">
             WhatsApp Blast SaaS
           </span>
-          <h1 className="text-5xl font-bold text-slate-900 mb-6 leading-tight">
+          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
             Kirim Ribuan Pesan WhatsApp <span className="text-blue-600">dengan Mudah</span>
           </h1>
-          <p className="text-xl text-slate-500 mb-8">
+          <p className="text-base md:text-xl text-slate-500 mb-8">
             Platform blast WhatsApp profesional. Kelola kontak dari CSV atau Google Sheets,
             personalisasi pesan, dan pantau progres real-time.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/login" className="px-8 py-3 text-base font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Link href="/login" className="px-8 py-3 text-base font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors min-h-[48px] flex items-center justify-center">
               Mulai Gratis
             </Link>
-            <Link href="#pricing" className="px-8 py-3 text-base font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+            <Link href="#pricing" className="px-8 py-3 text-base font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors min-h-[48px] flex items-center justify-center">
               Lihat Harga
             </Link>
           </div>
@@ -44,10 +44,10 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 px-4">
+      <section className="py-16 md:py-20 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-slate-900 mb-12">Fitur Unggulan</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-slate-900 mb-10 md:mb-12">Fitur Unggulan</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {[
               { icon: MessageSquare, title: 'Blast Massal',     desc: 'Kirim pesan ke ribuan kontak sekaligus dengan delay otomatis untuk menghindari blokir.' },
               { icon: Zap,           title: 'Template Dinamis', desc: 'Personalisasi pesan dengan variabel {{nama}}, {{kota}}, dan lainnya dari CSV.' },
@@ -56,7 +56,7 @@ export default function LandingPage() {
               { icon: Users,         title: 'Import Mudah',     desc: 'Import kontak dari CSV atau langsung dari Google Sheets.' },
               { icon: Clock,         title: 'Auto Delay',       desc: 'Delay otomatis antar pesan untuk menjaga keamanan akun WhatsApp.' },
             ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="rounded-xl border border-slate-200 bg-white p-6 hover:border-blue-200 transition-colors">
+              <div key={title} className="rounded-xl border border-slate-200 bg-white p-5 md:p-6 hover:border-blue-200 transition-colors">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                   <Icon size={20} className="text-blue-600" />
                 </div>
@@ -69,14 +69,14 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 px-4 bg-slate-50">
+      <section id="pricing" className="py-16 md:py-20 px-4 bg-slate-50">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-slate-900 mb-12">Harga</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-slate-900 mb-10 md:mb-12">Harga</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {/* Free */}
-            <div className="rounded-xl border border-slate-200 bg-white p-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 md:p-8">
               <h3 className="text-xl font-bold text-slate-900">Free</h3>
-              <p className="text-4xl font-bold mt-4">Rp 0</p>
+              <p className="text-3xl md:text-4xl font-bold mt-4">Rp 0</p>
               <p className="text-slate-500 text-sm mt-1">Selamanya</p>
               <ul className="mt-6 space-y-3 text-sm text-slate-600">
                 <li>✓ 50 pesan/hari</li>
@@ -84,14 +84,14 @@ export default function LandingPage() {
                 <li>✓ 2 campaign aktif</li>
                 <li>✓ Import CSV</li>
               </ul>
-              <Link href="/login" className="mt-8 block w-full py-3 text-center text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
+              <Link href="/login" className="mt-8 block w-full py-3 text-center text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors min-h-[44px] flex items-center justify-center">
                 Mulai Gratis
               </Link>
             </div>
             {/* Pro */}
-            <div className="rounded-xl border-2 border-blue-500 bg-blue-600 p-8 text-white">
+            <div className="rounded-xl border-2 border-blue-500 bg-blue-600 p-6 md:p-8 text-white">
               <h3 className="text-xl font-bold">Pro</h3>
-              <p className="text-4xl font-bold mt-4">Rp 99.000</p>
+              <p className="text-3xl md:text-4xl font-bold mt-4">Rp 99.000</p>
               <p className="text-blue-200 text-sm mt-1">per bulan</p>
               <ul className="mt-6 space-y-3 text-sm text-blue-100">
                 <li>✓ Pesan tak terbatas</li>
@@ -101,7 +101,7 @@ export default function LandingPage() {
                 <li>✓ Export laporan CSV</li>
                 <li>✓ Priority support</li>
               </ul>
-              <Link href="/login" className="mt-8 block w-full py-3 text-center text-sm font-medium text-blue-600 bg-white rounded-lg hover:bg-blue-50 transition-colors">
+              <Link href="/login" className="mt-8 block w-full py-3 text-center text-sm font-medium text-blue-600 bg-white rounded-lg hover:bg-blue-50 transition-colors min-h-[44px] flex items-center justify-center">
                 Upgrade ke Pro
               </Link>
             </div>

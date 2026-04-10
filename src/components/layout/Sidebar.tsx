@@ -26,7 +26,7 @@ export function Sidebar({ user }: SidebarProps) {
   }
 
   return (
-    <aside className="w-64 h-full flex flex-col bg-blue-50 border-r border-blue-100">
+    <aside className="hidden md:flex w-64 h-full flex-col bg-blue-50 border-r border-blue-100">
       {/* Logo */}
       <div className="p-6 border-b border-blue-100">
         <span className="text-xl font-bold text-blue-600">Mote Blaster</span>

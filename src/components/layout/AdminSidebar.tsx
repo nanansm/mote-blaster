@@ -22,7 +22,7 @@ export function AdminSidebar({ email }: { email: string }) {
   }
 
   return (
-    <aside className="w-64 h-full flex flex-col bg-slate-900 text-slate-100">
+    <aside className="hidden md:flex w-64 h-full flex-col bg-slate-900 text-slate-100">
       {/* Logo */}
       <div className="p-6 border-b border-slate-800">
         <span className="text-xl font-bold text-indigo-400">Mote Blaster</span>
