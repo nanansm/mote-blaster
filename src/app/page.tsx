@@ -62,7 +62,7 @@ export default function LandingPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/wtextlogosquare.webp" alt="Mote Blaster" className="h-9 hidden md:block" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/wlogogramsquare.webp" alt="Mote Blaster" className="h-9 md:hidden" />
+            <img src="/wlogogramsquare.webp" alt="Mote Blaster" className="h-12 md:hidden" />
           </Link>
 
           {/* Desktop nav links */}
@@ -145,12 +145,11 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left — copy */}
             <div>
-              <span className="inline-block bg-[#1a3a2a] text-[#F5E642] text-xs font-bold px-4 py-1 rounded-full mb-6 tracking-wide">
-                WhatsApp Blast Platform #1 Indonesia
+              <span className="inline-block bg-white text-black-600 text-xs font-bold px-4 py-1 rounded-full mb-6 tracking-wide">
+                Made with 🗿 by Mote Kreatif
               </span>
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-[#1a3a2a] leading-[0.92] tracking-tight mb-6">
-                Kirim Ribuan<br />Pesan WA<br />
-                <em>dalam Menit.</em>
+              <h1 className="text-5xl md:text-7xl lg:text-5xl font-black text-[#1a3a2a] leading-[0.92] tracking-tight mb-6">
+                Kirim Ribuan Pesan WA dalam Hitungan Menit
               </h1>
               <p className="text-lg md:text-xl text-[#1a3a2a]/80 max-w-lg mb-8 font-medium leading-relaxed">
                 Platform blast WhatsApp profesional untuk bisnis Indonesia. Import kontak dari CSV atau Google Sheets,
@@ -170,9 +169,6 @@ export default function LandingPage() {
                   Lihat Cara Kerja
                 </a>
               </div>
-              <p className="mt-8 text-[#1a3a2a]/70 font-semibold text-sm">
-                ⭐ Dipercaya bisnis-bisnis Indonesia
-              </p>
             </div>
 
             {/* Right — floating stats card */}
@@ -181,7 +177,7 @@ export default function LandingPage() {
                 <p className="text-sm text-gray-400 font-medium mb-4">Dashboard Overview</p>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-green-600 font-bold text-lg">2.847 pesan terkirim hari ini</p>
+                    <p className="text-green-600 font-bold text-lg">2.847 WA terkirim hari ini</p>
                     <div className="mt-2 bg-gray-100 rounded-full h-2 overflow-hidden">
                       <div className="bg-green-500 h-2 rounded-full" style={{ width: '87%' }} />
                     </div>
@@ -213,11 +209,14 @@ export default function LandingPage() {
       <section id="fitur" className="py-20 md:py-28 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           {/* Problem / Solution split */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center mb-36">
             {/* Problem */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-black text-[#1a3a2a] leading-tight mb-8">
-                Capek kirim WA<br />satu per satu?
+            <span className="inline-block bg-[#FF0000] text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4 tracking-wide">
+                Masalah Kamu hari ini?
+              </span>
+              <h2 className="text-4xl md:text-4xl font-black text-[#1a3a2a] leading-tight mb-8">
+                Capek kirim WA satu-satu?
               </h2>
               <ul className="space-y-5">
                 {[
@@ -235,7 +234,7 @@ export default function LandingPage() {
 
             {/* Solution */}
             <div>
-              <span className="inline-block bg-[#F97316] text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4 tracking-wide">
+              <span className="inline-block bg-[#008000] text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4 tracking-wide">
                 Solusinya
               </span>
               <h2 className="text-4xl md:text-5xl font-black text-[#1a3a2a] leading-tight mb-4">
@@ -477,7 +476,7 @@ export default function LandingPage() {
       {/* ── FOOTER ─────────────────────────────────────── */}
       <footer className="bg-[#1a3a2a] border-t border-white/10 py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-left md:items-start gap-8">
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/wlogogramsquare.webp" alt="Mote Blaster" className="h-10 mb-3" />
@@ -504,7 +503,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-10 pt-6 border-t border-white/10 text-center">
-            <p className="text-white/40 text-xs">© 2025 Mote Blaster. Produk dari Mote Kreatif.</p>
+            <p className="text-white/40 text-xs">© 2026 Mote Blaster. Produk dari Mote Kreatif.</p>
           </div>
         </div>
       </footer>
