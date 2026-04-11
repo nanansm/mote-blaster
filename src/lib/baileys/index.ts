@@ -37,9 +37,23 @@ interface SessionEntry {
 // ── Singleton store ───────────────────────────────────────────────────
 const g = global as typeof global & {
   _baileySessions?: Map<string, SessionEntry>
+  _baileyReconnectCount?: Map<string, number>
 }
 if (!g._baileySessions) g._baileySessions = new Map()
+if (!g._baileyReconnectCount) g._baileyReconnectCount = new Map()
 const sessions = g._baileySessions
+const reconnectCount = g._baileyReconnectCount
+
+const MAX_RECONNECT_ATTEMPTS = 3
+
+function isFatalDisconnect(code: number | undefined): boolean {
+  return (
+    code === DisconnectReason.loggedOut ||
+    code === DisconnectReason.badSession ||
+    code === DisconnectReason.forbidden ||
+    code === 400 // bad-request
+  )
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────
 function authDir(sessionName: string) {
@@ -127,14 +141,22 @@ export async function startSession(
 
     if (connection === 'close') {
       const code = (lastDisconnect?.error as Boom)?.output?.statusCode
-      const shouldReconnect = code !== DisconnectReason.loggedOut
+      const fatal = isFatalDisconnect(code)
+      const attempts = (reconnectCount.get(sessionName) ?? 0) + 1
+      const tooManyRetries = attempts >= MAX_RECONNECT_ATTEMPTS
+      const shouldReconnect = !fatal && !tooManyRetries
 
-      console.log(`[Baileys] ${sessionName} closed (${code}), reconnect=${shouldReconnect}`)
+      console.log(`[Baileys] ${sessionName} closed (${code}), attempt=${attempts}, reconnect=${shouldReconnect}`)
 
       sessions.delete(sessionName)
-      await updateDBStatus(instanceId, 'disconnected')
 
-      if (shouldReconnect) {
+      if (fatal || tooManyRetries) {
+        reconnectCount.delete(sessionName)
+        console.log(`[Baileys] Session ${sessionName} invalid, stopping reconnect`)
+        await updateDBStatus(instanceId, 'error')
+      } else {
+        reconnectCount.set(sessionName, attempts)
+        await updateDBStatus(instanceId, 'disconnected')
         // Reconnect setelah 3 detik
         setTimeout(() => startSession(sessionName, userId, instanceId), 3_000)
       }
@@ -143,6 +165,9 @@ export async function startSession(
     if (connection === 'open') {
       const e = sessions.get(sessionName)
       if (e) { e.status = 'connected'; e.qrDataUrl = undefined }
+
+      // Reset reconnect counter setelah berhasil connect
+      reconnectCount.delete(sessionName)
 
       // Ambil nomor HP dari creds
       const phone = sock.user?.id?.split(':')[0] ?? undefined

@@ -48,7 +48,13 @@ export default function ConnectionPage() {
       setShowNew(false)
       setNewName('')
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      if (e.message.includes('Paket Free') || e.message.includes('1 nomor WhatsApp')) {
+        toast.error('Paket Free hanya bisa 1 Instance WhatsApp saja.')
+      } else {
+        toast.error(e.message)
+      }
+    },
   })
 
   const connectMutation = useMutation({
@@ -91,7 +97,7 @@ export default function ConnectionPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl md:text-2xl font-semibold text-slate-800">WhatsApp Instances</h1>
         <Button onClick={() => setShowNew(true)} className="min-h-[44px]">
-          <Plus size={16} className="mr-2" /> Tambah Instance
+          <Plus size={16} className="mr-2" /> Tambahkan WhatsApp
         </Button>
       </div>
 
@@ -147,7 +153,7 @@ export default function ConnectionPage() {
       <Dialog open={showNew} onOpenChange={setShowNew}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tambah Instance WhatsApp</DialogTitle>
+            <DialogTitle>Tambahkan WhatsApp WhatsApp</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <Input

@@ -52,11 +52,24 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (session instanceof Response) return session
 
     const { id } = await params
+    const userId = session.user.id
+
     const [row] = await db.select().from(campaigns)
-      .where(and(eq(campaigns.id, id), eq(campaigns.userId, session.user.id)))
+      .where(and(eq(campaigns.id, id), eq(campaigns.userId, userId)))
     if (!row) return Response.json({ error: 'Not found' }, { status: 404 })
 
-    await db.delete(campaigns).where(eq(campaigns.id, id))
+    if (row.status === 'running') {
+      return Response.json({
+        error: 'Campaign sedang berjalan. Pause terlebih dahulu.',
+      }, { status: 400 })
+    }
+
+    await db.transaction(async (tx) => {
+      await tx.delete(messageLogs).where(eq(messageLogs.campaignId, id))
+      await tx.delete(contacts).where(eq(contacts.campaignId, id))
+      await tx.delete(campaigns).where(and(eq(campaigns.id, id), eq(campaigns.userId, userId)))
+    })
+
     return Response.json({ success: true })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Server error'

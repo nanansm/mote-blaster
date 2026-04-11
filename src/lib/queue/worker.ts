@@ -101,8 +101,34 @@ export async function startWorker() {
           set:    { sentCount: sql`${dailyUsage.sentCount} + 1` },
         })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      await db.update(messageLogs).set({ status: 'failed', error: msg })
+      const errorMsg = err instanceof Error ? err.message : String(err)
+
+      // Jika session tidak connected, jangan retry — langsung tandai failed
+      const isSessionError =
+        errorMsg.includes('tidak connected') ||
+        errorMsg.includes('not connected') ||
+        errorMsg.includes('Session') ||
+        errorMsg.includes('socket') ||
+        errorMsg.includes('Connection Closed') ||
+        errorMsg.includes('not open')
+
+      if (isSessionError) {
+        await db.update(messageLogs).set({
+          status: 'failed',
+          error: 'WhatsApp tidak aktif. Hubungkan ulang instance.',
+        }).where(and(
+          eq(messageLogs.campaignId, campaignId),
+          eq(messageLogs.contactPhone, contactPhone),
+        ))
+        await db.update(campaigns).set({
+          failedCount: sql`${campaigns.failedCount} + 1`,
+          updatedAt: new Date(),
+        }).where(eq(campaigns.id, campaignId))
+        await checkAndCompleteCampaign(campaignId)
+        return
+      }
+
+      await db.update(messageLogs).set({ status: 'failed', error: errorMsg })
         .where(and(
           eq(messageLogs.campaignId, campaignId),
           eq(messageLogs.contactPhone, contactPhone),
