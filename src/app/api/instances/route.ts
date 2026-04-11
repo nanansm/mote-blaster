@@ -27,8 +27,12 @@ export async function POST(req: NextRequest) {
     const isPro  = (session.user as any).plan === 'pro'
 
     const [{ total }] = await db.select({ total: count() }).from(instances).where(eq(instances.userId, userId))
-    const maxInstances = isPro ? 5 : Number(process.env.FREE_PLAN_MAX_INSTANCES || 1)
+    const MAX_FREE_INSTANCES = 1
+    const maxInstances = isPro ? 5 : MAX_FREE_INSTANCES
     if (Number(total) >= maxInstances) {
+      if (!isPro) {
+        return Response.json({ error: 'Paket Free hanya bisa menghubungkan 1 nomor WhatsApp. Upgrade ke Pro untuk lebih banyak.' }, { status: 403 })
+      }
       return Response.json({ error: `Maksimal ${maxInstances} instance untuk plan Anda` }, { status: 400 })
     }
 

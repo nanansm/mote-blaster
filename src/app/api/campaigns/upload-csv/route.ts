@@ -15,6 +15,16 @@ export async function POST(req: NextRequest) {
     const rows    = parseCSVContent(content)
     const columns = rows.length > 0 ? Object.keys(rows[0]) : []
 
+    const userPlan = (session.user as any).plan
+    if (userPlan === 'free' && rows.length > 50) {
+      return Response.json({
+        error: 'Paket Free hanya bisa mengimport maksimal 50 kontak. Upgrade ke Pro untuk import kontak unlimited.',
+        limitExceeded: true,
+        count: rows.length,
+        limit: 50,
+      }, { status: 403 })
+    }
+
     return Response.json({
       totalCount: rows.length,
       rows,                    // semua kontak — disimpan di state wizard

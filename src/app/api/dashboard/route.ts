@@ -64,12 +64,7 @@ export async function GET(req: NextRequest) {
 
     const dailyChart = dailyRows.map(r => ({ date: r.date, sent: r.sent, failed: 0 }))
 
-    // Campaign chart (by status)
-    const campaignChart = await db
-      .select({ status: campaigns.status, count: count() })
-      .from(campaigns)
-      .where(eq(campaigns.userId, userId))
-      .groupBy(campaigns.status)
+    const sentLast30Days = dailyRows.reduce((sum, r) => sum + r.sent, 0)
 
     return Response.json({
       sentCount:       Number(monthlySent.total),
@@ -78,8 +73,9 @@ export async function GET(req: NextRequest) {
       activeCampaigns: activeCampaigns.count,
       dailySentCount,
       dailyRemaining,
+      sentToday:       dailySentCount,
+      sentLast30Days,
       dailyChart,
-      campaignChart,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Server error'

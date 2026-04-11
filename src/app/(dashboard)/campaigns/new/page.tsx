@@ -41,7 +41,9 @@ export default function NewCampaignPage() {
 
   // Step 3
   const [template, setTemplate] = useState('')
-  const [delay, setDelay]       = useState(10)
+  const [minDelay, setMinDelay] = useState(15)
+  const [maxDelay, setMaxDelay] = useState(30)
+  const [delayError, setDelayError] = useState('')
 
   // Instances list
   const { data: instData } = useQuery({
@@ -116,7 +118,11 @@ export default function NewCampaignPage() {
       if (!res.ok) throw new Error(campaign.error)
 
       if (!isDraft) {
-        const startRes  = await fetch(`/api/campaigns/${campaign.data.id}/start`, { method: 'POST' })
+        const startRes  = await fetch(`/api/campaigns/${campaign.data.id}/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ minDelay, maxDelay }),
+        })
         const startData = await startRes.json()
         if (!startRes.ok) throw new Error(startData.error)
         toast.success(`${startData.jobsQueued} pesan dijadwalkan!`)
@@ -307,16 +313,47 @@ export default function NewCampaignPage() {
             </div>
           )}
           <div>
-            <label className="text-sm text-slate-600 mb-1 block">Delay antar pesan (detik)</label>
-            <Input type="number" min={5} max={300} value={delay}
-              onChange={e => setDelay(Number(e.target.value))} />
-            <p className="text-xs text-slate-400 mt-1">
-              Minimum 5 detik. Lebih tinggi = lebih aman untuk akun WhatsApp kamu.
+            <label className="text-sm font-medium text-slate-700 mb-2 block">Pengaturan Delay Antar Pesan</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Delay Minimum (detik)</label>
+                <Input
+                  type="number"
+                  min={15}
+                  value={minDelay}
+                  onChange={e => {
+                    const v = Number(e.target.value)
+                    setMinDelay(v)
+                    if (v < 15) setDelayError('Delay minimum tidak boleh kurang dari 15 detik')
+                    else if (maxDelay <= v) setDelayError('Delay maksimum harus lebih besar dari minimum')
+                    else setDelayError('')
+                  }}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Delay Maksimum (detik)</label>
+                <Input
+                  type="number"
+                  min={15}
+                  value={maxDelay}
+                  onChange={e => {
+                    const v = Number(e.target.value)
+                    setMaxDelay(v)
+                    if (minDelay < 15) setDelayError('Delay minimum tidak boleh kurang dari 15 detik')
+                    else if (v <= minDelay) setDelayError('Delay maksimum harus lebih besar dari minimum')
+                    else setDelayError('')
+                  }}
+                />
+              </div>
+            </div>
+            {delayError && <p className="text-xs text-red-500 mt-1">{delayError}</p>}
+            <p className="text-xs text-slate-500 mt-2">
+              Sistem akan menggunakan delay acak antara {minDelay} dan {maxDelay} detik antar setiap pesan. Semakin besar delay, semakin aman akun WhatsApp kamu.
             </p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setStep(2)} className="min-h-[44px]"><ChevronLeft size={16} className="mr-1" /> Back</Button>
-            <Button className="flex-1 min-h-[44px]" onClick={() => setStep(4)} disabled={!template.trim()}>
+            <Button className="flex-1 min-h-[44px]" onClick={() => setStep(4)} disabled={!template.trim() || !!delayError || minDelay < 15 || maxDelay <= minDelay}>
               Lanjut <ChevronRight size={16} className="ml-1" />
             </Button>
           </div>
@@ -332,9 +369,9 @@ export default function NewCampaignPage() {
               ['Nama Campaign',  name],
               ['Sumber Kontak',  source === 'csv' ? 'Upload CSV' : 'Google Sheets'],
               ['Total Kontak',   String(parseResult?.totalCount ?? 0)],
-              ['Delay',          `${delay} detik`],
+              ['Delay',          `${minDelay}–${maxDelay} detik (acak)`],
               ['Estimasi waktu', parseResult?.totalCount
-                ? `~${Math.ceil((parseResult.totalCount * delay) / 60)} menit`
+                ? `~${Math.ceil((parseResult.totalCount * ((minDelay + maxDelay) / 2)) / 60)} menit`
                 : '-'],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between py-2.5">

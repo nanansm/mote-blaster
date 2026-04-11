@@ -2,12 +2,35 @@ import { Worker, type Job } from 'bullmq'
 import { getRedis } from './index'
 import { db } from '@/lib/db'
 import { messageLogs, campaigns, dailyUsage } from '@/lib/db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, inArray, count } from 'drizzle-orm'
 import { renderTemplate } from '@/lib/template-engine'
 import { normalizePhone, getTodayWIB } from '@/lib/utils'
 import { sendMessage } from '@/lib/baileys'
 
 const g = global as typeof global & { _worker?: Worker }
+
+async function checkAndCompleteCampaign(campaignId: string) {
+  const [campaign] = await db.select({ contactsCount: campaigns.contactsCount })
+    .from(campaigns)
+    .where(eq(campaigns.id, campaignId))
+  if (!campaign) return
+
+  const [{ processed }] = await db
+    .select({ processed: count() })
+    .from(messageLogs)
+    .where(and(
+      eq(messageLogs.campaignId, campaignId),
+      inArray(messageLogs.status, ['sent', 'failed', 'skipped']),
+    ))
+
+  if (Number(processed) >= campaign.contactsCount) {
+    await db.update(campaigns).set({
+      status: 'completed',
+      completedAt: new Date(),
+      updatedAt: new Date(),
+    }).where(eq(campaigns.id, campaignId))
+  }
+}
 
 export interface BlastJobData {
   campaignId:      string
@@ -43,6 +66,7 @@ export async function startWorker() {
             eq(messageLogs.campaignId, campaignId),
             eq(messageLogs.contactPhone, contactPhone),
           ))
+        await checkAndCompleteCampaign(campaignId)
         return
       }
     }
@@ -67,6 +91,7 @@ export async function startWorker() {
       await db.update(campaigns).set({
         sentCount: sql`${campaigns.sentCount} + 1`, updatedAt: new Date(),
       }).where(eq(campaigns.id, campaignId))
+      await checkAndCompleteCampaign(campaignId)
 
       const today = getTodayWIB()
       await db.insert(dailyUsage)
@@ -85,6 +110,7 @@ export async function startWorker() {
       await db.update(campaigns).set({
         failedCount: sql`${campaigns.failedCount} + 1`, updatedAt: new Date(),
       }).where(eq(campaigns.id, campaignId))
+      await checkAndCompleteCampaign(campaignId)
       throw err
     }
   }, {

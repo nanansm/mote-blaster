@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
     const isPro  = (session.user as any).plan === 'pro'
 
     if (!isPro) {
-      const maxCampaigns = Number(process.env.FREE_PLAN_MAX_CAMPAIGNS || 2)
+      const MAX_FREE_CAMPAIGNS = 1
       const [{ total }] = await db.select({ total: count() }).from(campaigns)
-        .where(and(eq(campaigns.userId, userId), inArray(campaigns.status, ['draft', 'pending', 'running', 'paused'])))
-      if (Number(total) >= maxCampaigns) {
-        return Response.json({ error: `Maksimal ${maxCampaigns} campaign aktif untuk free plan` }, { status: 400 })
+        .where(and(eq(campaigns.userId, userId), inArray(campaigns.status, ['draft', 'pending', 'running', 'paused', 'completed'])))
+      if (Number(total) >= MAX_FREE_CAMPAIGNS) {
+        return Response.json({ error: 'Paket Free hanya bisa membuat 1 campaign. Upgrade ke Pro untuk campaign unlimited.' }, { status: 403 })
       }
     }
 

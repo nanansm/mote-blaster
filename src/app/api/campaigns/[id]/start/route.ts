@@ -43,7 +43,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }))
     ).onConflictDoNothing()
 
-    const delaySeconds = Number(process.env.MIN_DELAY_SECONDS || 10)
+    const body = await req.json().catch(() => ({}))
+    const minDelay = Math.max(15, Number(body.minDelay ?? process.env.MIN_DELAY_SECONDS ?? 15))
+    const maxDelay = Math.max(minDelay + 1, Number(body.maxDelay ?? minDelay + 15))
+
+    const getRandomDelay = (min: number, max: number) =>
+      Math.floor(Math.random() * (max - min + 1) + min) * 1000
+
     const queue = getBlastQueue()
 
     const jobs = contactList.map((c, index) => ({
@@ -58,7 +64,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         userId,
         isPro,
       },
-      opts: { delay: index * delaySeconds * 1000 },
+      opts: {
+        delay: index === 0 ? 0 : getRandomDelay(minDelay, maxDelay) * index,
+        attempts: 3,
+        backoff: { type: 'fixed' as const, delay: 15_000 },
+      },
     }))
 
     await queue.addBulk(jobs)

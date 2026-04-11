@@ -6,6 +6,7 @@ import { Plus, Wifi, WifiOff, QrCode, Trash2, RefreshCw } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BlastingRules } from '@/components/shared/BlastingRules'
 
 const statusColor: Record<string, string> = {
   connected:    'text-green-600 bg-green-50',
@@ -85,6 +86,8 @@ export default function ConnectionPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-6">
+      <BlastingRules />
+
       <div className="flex items-center justify-between">
         <h1 className="text-xl md:text-2xl font-semibold text-slate-800">WhatsApp Instances</h1>
         <Button onClick={() => setShowNew(true)} className="min-h-[44px]">
