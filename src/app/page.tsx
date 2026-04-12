@@ -14,9 +14,11 @@ import stiker4 from '@/app/img/stiker/4.webp'
 import stiker5 from '@/app/img/stiker/5.webp'
 import stiker6 from '@/app/img/stiker/6.webp'
 import stiker7 from '@/app/img/stiker/7.webp'
-import blastMasal from '@/app/img/fitur/blast_masal.webp'
+import blast from '@/app/img/fitur/blast.webp'
+import chatRecording from '@/app/img/fitur/chatrecording.webp'
 import templateDinamis from '@/app/img/fitur/template_dinamis.webp'
 import multiInstance from '@/app/img/fitur/multi_instance.webp'
+import importMudah from '@/app/img/fitur/importmudah.webp'
 import analytics from '@/app/img/fitur/analytics.webp'
 
 /* ── Blob decoration ─────────────────────────────────── */
@@ -68,8 +70,8 @@ const FeatureCard = ({ title, desc, screenshot, stiker, badge }: FeatureCardProp
     <div className="relative w-full h-44 bg-gray-50 overflow-hidden">
       <Image src={screenshot} alt={title} fill className="object-cover" />
       {/* Stiker overlay */}
-      <div className="absolute bottom-2 right-2 w-12 h-12">
-        <Image src={stiker} alt="" width={48} height={48} className="drop-shadow" />
+      <div className="absolute bottom-2 right-2 w-[100px] h-[100px]">
+        <Image src={stiker} alt="" width={100} height={100} className="drop-shadow" />
       </div>
     </div>
     <div className="p-5">
@@ -110,7 +112,7 @@ export default function LandingPage() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/wtextlogosquare.webp" alt="Mote Blaster" className="h-9 hidden md:block" />
+            <img src="/textlogosquare.webp" alt="Mote Blaster" className="h-12 hidden md:block" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/wlogogramsquare.webp" alt="Mote Blaster" className="h-12 md:hidden" />
           </Link>
@@ -268,21 +270,34 @@ export default function LandingPage() {
           {/* 2-col, 3-row grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <FeatureCard
-              title="Blast Massal"
-              desc="Kirim pesan ke ribuan kontak sekaligus dengan delay otomatis untuk menghindari blokir."
-              screenshot={blastMasal}
-              stiker={stiker3}
+              title="Chat Recording"
+              desc="Rekam otomatis semua chat masuk ke Google Sheets. Fitur eksklusif Pro Plan."
+              screenshot={chatRecording}
+              stiker={stiker1}
+              badge="★ BARU"
             />
             <FeatureCard
               title="Template & Auto Delay"
               desc="Personalisasi pesan dengan variabel {{nama}}, {{kota}} dan delay otomatis antar pesan untuk menjaga keamanan akun."
               screenshot={templateDinamis}
-              stiker={stiker4}
+              stiker={stiker2}
             />
             <FeatureCard
               title="Multi Instance"
               desc="Kelola banyak nomor WhatsApp sekaligus dari satu dashboard."
               screenshot={multiInstance}
+              stiker={stiker3}
+            />
+            <FeatureCard
+              title="Import Mudah"
+              desc="Import kontak dari CSV atau langsung dari Google Sheets."
+              screenshot={importMudah}
+              stiker={stiker4}
+            />
+            <FeatureCard
+              title="Blast Massal"
+              desc="Kirim pesan ke ribuan kontak sekaligus dengan delay otomatis untuk menghindari blokir."
+              screenshot={blast}
               stiker={stiker5}
             />
             <FeatureCard
@@ -290,19 +305,6 @@ export default function LandingPage() {
               desc="Pantau progres campaign real-time: sent, failed, dan skipped."
               screenshot={analytics}
               stiker={stiker6}
-            />
-            <FeatureCard
-              title="Import Mudah"
-              desc="Import kontak dari CSV atau langsung dari Google Sheets."
-              screenshot={blastMasal}
-              stiker={stiker7}
-            />
-            <FeatureCard
-              title="Chat Recording"
-              desc="Rekam otomatis semua chat masuk ke Google Sheets. Fitur eksklusif Pro Plan."
-              screenshot={analytics}
-              stiker={stiker1}
-              badge="★ BARU"
             />
           </div>
         </div>
@@ -338,15 +340,19 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Free card */}
-            <div className="bg-white rounded-3xl p-8 border border-gray-200 relative">
-              <div className="mb-2">
+            <div className="bg-white rounded-3xl p-8 border border-gray-200 relative overflow-hidden">
+              <div className="mb-2 pr-24">
                 <span className="inline-block bg-[#86C67C]/30 text-green-800 text-xs font-bold px-3 py-1.5 rounded-full">
                   Gratis Selamanya
                 </span>
               </div>
-              <div className="mb-6">
+              <div className="mb-6 pr-24">
                 <span className="text-6xl font-black text-[#1a3a2a]">Rp 0</span>
                 <span className="text-lg text-gray-500 ml-1">/ Selamanya</span>
+              </div>
+              {/* Stiker top-right */}
+              <div className="absolute top-4 right-4">
+                <Image src={stiker7} alt="" width={80} height={80} className="drop-shadow opacity-90 rotate-[8deg]" />
               </div>
               <ul className="space-y-3 mb-8">
                 {[
@@ -368,21 +374,22 @@ export default function LandingPage() {
               >
                 Mulai Gratis
               </Link>
-              <div className="mt-4 flex justify-center">
-                <Image src={stiker2} alt="" width={64} height={64} className="drop-shadow opacity-80" />
-              </div>
             </div>
 
             {/* Pro card */}
-            <div className="bg-[#1a3a2a] rounded-3xl p-8 relative">
-              <div className="mb-2">
+            <div className="bg-[#1a3a2a] rounded-3xl p-8 relative overflow-hidden">
+              <div className="mb-2 pr-24">
                 <span className="inline-block bg-[#F97316] text-white text-xs font-bold px-3 py-1.5 rounded-full">
                   Paling Populer
                 </span>
               </div>
-              <div className="mb-6">
+              <div className="mb-6 pr-24">
                 <span className="text-5xl font-black text-[#F5E642]">Rp 99.000</span>
                 <span className="text-lg text-white/60 ml-1">/ per bulan</span>
+              </div>
+              {/* Stiker top-right */}
+              <div className="absolute top-4 right-4">
+                <Image src={stiker3} alt="" width={80} height={80} className="drop-shadow opacity-90 rotate-[-6deg]" />
               </div>
               <ul className="space-y-3 mb-8">
                 {[
@@ -406,9 +413,6 @@ export default function LandingPage() {
                 Upgrade ke Pro
               </Link>
               <p className="text-center text-xs text-white/50">Bayar via Xendit · Cancel kapan saja</p>
-              <div className="mt-4 flex justify-center">
-                <Image src={stiker3} alt="" width={64} height={64} className="drop-shadow opacity-80" />
-              </div>
             </div>
           </div>
         </div>
