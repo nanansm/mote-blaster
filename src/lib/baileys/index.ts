@@ -20,8 +20,10 @@ const silentLogger = {
 } as any
 import QRCode from 'qrcode'
 import { db } from '@/lib/db'
-import { instances } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { instances, users, chatRecordingConfigs } from '@/lib/db/schema'
+import { eq, and } from 'drizzle-orm'
+import { isProActive } from '@/lib/plan-helpers'
+import { getChatRecordQueue } from '@/lib/queue'
 
 // ── Types ────────────────────────────────────────────────────────────
 export type SessionStatus = 'disconnected' | 'connecting' | 'qr_code' | 'connected' | 'error'
@@ -178,6 +180,65 @@ export async function startSession(
 
   // ── creds.update ─────────────────────────────────────────────────
   sock.ev.on('creds.update', saveCreds)
+
+  // ── messages.upsert — Chat Recording ─────────────────────────────
+  sock.ev.on('messages.upsert', (m) => {
+    if (m.type !== 'notify') return
+    for (const msg of m.messages) {
+      // Skip outgoing messages
+      if (msg.key.fromMe) continue
+      const remoteJid = msg.key.remoteJid ?? ''
+      // Skip group messages
+      if (remoteJid.endsWith('@g.us')) continue
+      const content = msg.message
+      if (!content) continue
+
+      // Extract text content
+      let text: string | null = null
+      if (content.conversation) {
+        text = content.conversation
+      } else if (content.extendedTextMessage?.text) {
+        text = content.extendedTextMessage.text
+      } else if (content.imageMessage?.caption) {
+        text = content.imageMessage.caption
+      }
+      if (!text) continue
+
+      const phone = remoteJid.split('@')[0].replace(/\D/g, '')
+      const name  = msg.pushName ?? ''
+      const recordedAt = new Date(Number(msg.messageTimestamp ?? Date.now() / 1000) * 1000).toISOString()
+
+      // Fire-and-forget: check Pro status + config, then enqueue
+      ;(async () => {
+        try {
+          const [userRow] = await db
+            .select({ plan: users.plan, proExpiresAt: users.proExpiresAt })
+            .from(users)
+            .where(eq(users.id, userId))
+          if (!userRow || !isProActive(userRow)) return
+
+          const [config] = await db
+            .select({ id: chatRecordingConfigs.id })
+            .from(chatRecordingConfigs)
+            .where(and(
+              eq(chatRecordingConfigs.instanceId, instanceId),
+              eq(chatRecordingConfigs.isActive, true),
+            ))
+          if (!config) return
+
+          await getChatRecordQueue().add('record', {
+            configId:   config.id,
+            phone,
+            name,
+            message:    text!,
+            recordedAt,
+          })
+        } catch (err) {
+          console.error('[Baileys] Chat record enqueue error:', err)
+        }
+      })()
+    }
+  })
 }
 
 // ── getSessionStatus ──────────────────────────────────────────────────

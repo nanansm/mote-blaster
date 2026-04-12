@@ -22,6 +22,7 @@ export const contactSourceEnum    = pgEnum('contact_source',    ['csv', 'google_
 export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'active', 'cancelled', 'expired', 'unpaid',
 ])
+export const recordingStatusEnum = pgEnum('recording_status', ['success', 'failed'])
 
 // ── better-auth tables ─────────────────────────────────────────────
 // NAMA TABEL HARUS SINGULAR: 'user', 'session', 'account', 'verification'
@@ -38,6 +39,7 @@ export const users = pgTable('user', {
   // Extended fields (didaftarkan di better-auth additionalFields)
   plan:          planEnum('plan').notNull().default('free'),
   role:          roleEnum('role').notNull().default('user'),
+  proExpiresAt:  timestamp('pro_expires_at'),
 })
 
 export const sessions = pgTable('session', {
@@ -150,10 +152,33 @@ export const subscriptions = pgTable('subscriptions', {
   updatedAt:            timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const chatRecordingConfigs = pgTable('chat_recording_config', {
+  id:            text('id').primaryKey().$defaultFn(() => createId()),
+  userId:        text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  instanceId:    text('instance_id').notNull().references(() => instances.id, { onDelete: 'cascade' }),
+  spreadsheetId: text('spreadsheet_id').notNull(),
+  sheetName:     text('sheet_name').notNull().default('Sheet1'),
+  isActive:      boolean('is_active').notNull().default(true),
+  createdAt:     timestamp('created_at').notNull().defaultNow(),
+  updatedAt:     timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const chatRecordingLogs = pgTable('chat_recording_logs', {
+  id:         text('id').primaryKey().$defaultFn(() => createId()),
+  configId:   text('config_id').notNull().references(() => chatRecordingConfigs.id, { onDelete: 'cascade' }),
+  phone:      text('phone').notNull(),
+  name:       text('name').notNull().default(''),
+  message:    text('message').notNull(),
+  recordedAt: timestamp('recorded_at').notNull().defaultNow(),
+  status:     recordingStatusEnum('status').notNull().default('success'),
+})
+
 // ── Inferred types ─────────────────────────────────────────────────
-export type User         = typeof users.$inferSelect
-export type Instance     = typeof instances.$inferSelect
-export type Campaign     = typeof campaigns.$inferSelect
-export type Contact      = typeof contacts.$inferSelect
-export type MessageLog   = typeof messageLogs.$inferSelect
-export type Subscription = typeof subscriptions.$inferSelect
+export type User                = typeof users.$inferSelect
+export type Instance            = typeof instances.$inferSelect
+export type Campaign            = typeof campaigns.$inferSelect
+export type Contact             = typeof contacts.$inferSelect
+export type MessageLog          = typeof messageLogs.$inferSelect
+export type Subscription        = typeof subscriptions.$inferSelect
+export type ChatRecordingConfig = typeof chatRecordingConfigs.$inferSelect
+export type ChatRecordingLog    = typeof chatRecordingLogs.$inferSelect

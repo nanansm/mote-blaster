@@ -13,17 +13,36 @@ export async function PATCH(
     if (session instanceof Response) return session
 
     const { id } = await params
-    const { plan } = await req.json()
+    const { plan, proExpiresAt } = await req.json()
 
     if (plan !== 'free' && plan !== 'pro') {
       return Response.json({ error: 'Plan must be free or pro' }, { status: 400 })
     }
 
+    const updateData: Partial<typeof users.$inferInsert> = {
+      plan,
+      updatedAt: new Date(),
+    }
+
+    if (plan === 'pro') {
+      // Set proExpiresAt if provided, otherwise default to 30 days
+      if (proExpiresAt) {
+        updateData.proExpiresAt = new Date(proExpiresAt)
+      } else {
+        const d = new Date()
+        d.setDate(d.getDate() + 30)
+        updateData.proExpiresAt = d
+      }
+    } else {
+      // Downgrading to free: clear expiry
+      updateData.proExpiresAt = null
+    }
+
     const [updated] = await db
       .update(users)
-      .set({ plan, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(users.id, id))
-      .returning({ id: users.id, name: users.name, plan: users.plan })
+      .returning({ id: users.id, name: users.name, plan: users.plan, proExpiresAt: users.proExpiresAt })
 
     if (!updated) {
       return Response.json({ error: 'User not found' }, { status: 404 })
