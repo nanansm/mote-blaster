@@ -226,6 +226,7 @@ export async function startSession(
             ))
           if (!config) return
 
+          console.log('[ChatRecord] remoteJid:', remoteJid, 'extracted phone:', phone)
           await getChatRecordQueue().add('record', {
             configId:   config.id,
             phone,
