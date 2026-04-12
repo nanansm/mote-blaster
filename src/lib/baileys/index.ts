@@ -190,6 +190,13 @@ export async function startSession(
       const remoteJid = msg.key.remoteJid ?? ''
       // Skip group messages
       if (remoteJid.endsWith('@g.us')) continue
+      // Debug: inspect full message key
+      console.log('[ChatRecord] FULL MSG KEY:', JSON.stringify(msg.key))
+      console.log('[ChatRecord] FULL MSG participant:', msg.key.participant)
+      console.log('[ChatRecord] pushName:', msg.pushName)
+      console.log('[ChatRecord] remoteJid:', msg.key.remoteJid)
+      // Skip LID format — WhatsApp LID (@lid) is not a phone number; only record @s.whatsapp.net
+      if (!remoteJid.endsWith('@s.whatsapp.net')) continue
       const content = msg.message
       if (!content) continue
 
@@ -226,7 +233,6 @@ export async function startSession(
             ))
           if (!config) return
 
-          console.log('[ChatRecord] remoteJid:', remoteJid, 'extracted phone:', phone)
           await getChatRecordQueue().add('record', {
             configId:   config.id,
             phone,
