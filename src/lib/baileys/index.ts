@@ -204,7 +204,7 @@ export async function startSession(
       }
       if (!text) continue
 
-      const phone = remoteJid.split('@')[0].replace(/\D/g, '')
+      const phone = remoteJid.split('@')[0]
       const name  = msg.pushName ?? ''
       const recordedAt = new Date(Number(msg.messageTimestamp ?? Date.now() / 1000) * 1000).toISOString()
 
