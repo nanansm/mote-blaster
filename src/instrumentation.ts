@@ -6,6 +6,9 @@ export async function register() {
     const { startChatRecordWorker } = await import('./lib/queue/chat-record-worker')
     await startChatRecordWorker()
 
+    const { startAiReplyWorker } = await import('./lib/queue/ai-agent-worker')
+    await startAiReplyWorker()
+
     // Jangan restore sessions di production saat startup —
     // user connect manual via dashboard, mencegah memory spike
     if (process.env.NODE_ENV !== 'production') {

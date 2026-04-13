@@ -14,7 +14,7 @@ import stiker4 from '@/app/img/stiker/4.webp'
 import stiker5 from '@/app/img/stiker/5.webp'
 import stiker6 from '@/app/img/stiker/6.webp'
 import stiker7 from '@/app/img/stiker/7.webp'
-import blast from '@/app/img/fitur/blast.webp'
+import aiAgent from '@/app/img/fitur/aiagent.webp'
 import chatRecording from '@/app/img/fitur/chatrecording.webp'
 import templateDinamis from '@/app/img/fitur/template_dinamis.webp'
 import multiInstance from '@/app/img/fitur/multi_instance.webp'
@@ -270,6 +270,13 @@ export default function LandingPage() {
           {/* 2-col, 3-row grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <FeatureCard
+              title="AI Agent"
+              desc="Balas chat WhatsApp otomatis dengan AI. Setup sekali, aktif 24/7 tanpa perlu online."
+              screenshot={aiAgent}
+              stiker={stiker5}
+              badge="★ PRO"
+            />
+            <FeatureCard
               title="Chat Recording"
               desc="Rekam otomatis semua chat masuk ke Google Sheets. Fitur eksklusif Pro Plan."
               screenshot={chatRecording}
@@ -293,12 +300,6 @@ export default function LandingPage() {
               desc="Import kontak dari CSV atau langsung dari Google Sheets."
               screenshot={importMudah}
               stiker={stiker4}
-            />
-            <FeatureCard
-              title="Blast Massal"
-              desc="Kirim pesan ke ribuan kontak sekaligus dengan delay otomatis untuk menghindari blokir."
-              screenshot={blast}
-              stiker={stiker5}
             />
             <FeatureCard
               title="Analytics Real-time"
@@ -399,6 +400,7 @@ export default function LandingPage() {
                   'Import CSV & Google Sheets',
                   'Chat Recording otomatis',
                   'Priority support',
+                  'Ai Agent',
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-white font-medium">
                     <span className="text-[#F5E642] font-bold">✓</span>

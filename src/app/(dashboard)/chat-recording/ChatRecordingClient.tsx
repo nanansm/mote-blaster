@@ -78,10 +78,16 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
 
   // Form state
   const [instanceId, setInstanceId]       = useState('')
-  const [spreadsheetId, setSpreadsheetId] = useState('')
+  const [spreadsheetInput, setSpreadsheetInput] = useState('')
   const [sheetName, setSheetName]         = useState('Sheet1')
   const [editSheet, setEditSheet]         = useState('')
-  const [editSsId, setEditSsId]           = useState('')
+  const [editSsInput, setEditSsInput]     = useState('')
+
+  function extractSheetId(input: string): string {
+    if (!input.includes('/')) return input.trim()
+    const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/)
+    return match ? match[1] : input.trim()
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['chat-recording'],
@@ -107,6 +113,7 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const spreadsheetId = extractSheetId(spreadsheetInput)
       const res = await fetch('/api/chat-recording', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,7 +126,7 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
     onSuccess: () => {
       toast.success('Chat recording berhasil ditambahkan!')
       setFormOpen(false)
-      setInstanceId(''); setSpreadsheetId(''); setSheetName('Sheet1')
+      setInstanceId(''); setSpreadsheetInput(''); setSheetName('Sheet1')
       qc.invalidateQueries({ queryKey: ['chat-recording'] })
     },
     onError: (e: Error) => toast.error(e.message),
@@ -127,6 +134,10 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      // If data contains spreadsheetId, it may be a raw URL — extract the ID
+      if (typeof data.spreadsheetId === 'string') {
+        data.spreadsheetId = extractSheetId(data.spreadsheetId)
+      }
       const res = await fetch(`/api/chat-recording/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -203,12 +214,12 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
             </div>
           </li>
           <li>
-            Copy <strong>Spreadsheet ID</strong> dari URL:<br />
-            <span className="font-mono text-xs bg-white px-2 py-0.5 rounded border border-amber-200">
-              https://docs.google.com/spreadsheets/d/<strong>[SPREADSHEET_ID]</strong>/edit
+            Copy <strong>URL lengkap</strong> dari browser kamu:<br />
+            <span className="font-mono text-xs bg-white px-2 py-0.5 rounded border border-amber-200 break-all">
+              https://docs.google.com/spreadsheets/d/1He3REuI45p2.../edit
             </span>
           </li>
-          <li>Masukkan Spreadsheet ID dan nama Sheet di form di atas</li>
+          <li>Paste URL dan masukkan nama Sheet di form, lalu klik simpan</li>
           <li>Klik simpan — chat recording otomatis berjalan!</li>
         </ol>
         <p className="text-xs text-slate-500 mt-2">
@@ -251,7 +262,7 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
                 <button
                   onClick={() => {
                     setEditConfig(c)
-                    setEditSsId(c.spreadsheetId)
+                    setEditSsInput(c.spreadsheetId)
                     setEditSheet(c.sheetName)
                     setEditOpen(true)
                   }}
@@ -296,13 +307,13 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label>Spreadsheet ID</Label>
+              <Label>Google Sheets URL</Label>
               <Input
-                placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-                value={spreadsheetId}
-                onChange={e => setSpreadsheetId(e.target.value)}
+                placeholder="https://docs.google.com/spreadsheets/d/1He3REuI45p2mfvHLlTc3QkOu251ieWaM351qBYz3hTs/edit"
+                value={spreadsheetInput}
+                onChange={e => setSpreadsheetInput(e.target.value)}
               />
-              <p className="text-xs text-slate-400">Ambil dari URL Google Sheets — bagian antara /d/ dan /edit</p>
+              <p className="text-xs text-slate-400">Paste URL lengkap dari Google Sheets kamu</p>
             </div>
             <div className="space-y-1.5">
               <Label>Nama Sheet / Tab</Label>
@@ -318,7 +329,7 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
             <Button
               className="bg-[#1a3a2a] hover:bg-[#1a3a2a]/90 text-white"
               onClick={() => createMutation.mutate()}
-              disabled={!instanceId || !spreadsheetId || createMutation.isPending}
+              disabled={!instanceId || !spreadsheetInput || createMutation.isPending}
             >
               {createMutation.isPending ? 'Menyimpan...' : 'Simpan'}
             </Button>
@@ -334,8 +345,13 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Spreadsheet ID</Label>
-              <Input value={editSsId} onChange={e => setEditSsId(e.target.value)} />
+              <Label>Google Sheets URL atau Spreadsheet ID</Label>
+              <Input
+                placeholder="https://docs.google.com/spreadsheets/d/... atau ID langsung"
+                value={editSsInput}
+                onChange={e => setEditSsInput(e.target.value)}
+              />
+              <p className="text-xs text-slate-400">Paste URL lengkap atau Spreadsheet ID</p>
             </div>
             <div className="space-y-1.5">
               <Label>Nama Sheet / Tab</Label>
@@ -348,7 +364,7 @@ export default function ChatRecordingClient({ serviceAccountEmail }: { serviceAc
               className="bg-[#1a3a2a] hover:bg-[#1a3a2a]/90 text-white"
               onClick={() => editConfig && updateMutation.mutate({
                 id: editConfig.id,
-                data: { spreadsheetId: editSsId, sheetName: editSheet },
+                data: { spreadsheetId: editSsInput, sheetName: editSheet },
               })}
               disabled={updateMutation.isPending}
             >

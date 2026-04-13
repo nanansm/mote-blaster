@@ -1,7 +1,12 @@
 import { Queue } from 'bullmq'
 import IORedis from 'ioredis'
 
-const g = global as typeof global & { _redis?: IORedis; _blastQueue?: Queue; _chatRecordQueue?: Queue }
+const g = global as typeof global & {
+  _redis?: IORedis
+  _blastQueue?: Queue
+  _chatRecordQueue?: Queue
+  _aiReplyQueue?: Queue
+}
 
 export function getRedis(): IORedis {
   if (g._redis) return g._redis
@@ -47,4 +52,18 @@ export function getChatRecordQueue(): Queue {
     },
   })
   return g._chatRecordQueue
+}
+
+export function getAiReplyQueue(): Queue {
+  if (g._aiReplyQueue) return g._aiReplyQueue
+  g._aiReplyQueue = new Queue('ai-reply', {
+    connection: getRedis(),
+    defaultJobOptions: {
+      removeOnComplete: 200,
+      removeOnFail:     200,
+      attempts:         2,
+      backoff: { type: 'fixed', delay: 10_000 },
+    },
+  })
+  return g._aiReplyQueue
 }

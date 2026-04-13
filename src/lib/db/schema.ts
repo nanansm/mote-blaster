@@ -173,6 +173,37 @@ export const chatRecordingLogs = pgTable('chat_recording_logs', {
   status:     recordingStatusEnum('status').notNull().default('success'),
 })
 
+export const aiAgents = pgTable('ai_agents', {
+  id:             text('id').primaryKey().$defaultFn(() => createId()),
+  userId:         text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  instanceId:     text('instance_id').notNull().references(() => instances.id, { onDelete: 'cascade' }),
+  isActive:       boolean('is_active').default(false).notNull(),
+
+  // LLM Config
+  provider:       text('provider').notNull(),
+  apiKey:         text('api_key').notNull(),   // AES-256-GCM encrypted
+  model:          text('model').notNull(),
+
+  // Prompt Config
+  systemPrompt:   text('system_prompt').notNull().default(''),
+  strictRules:    text('strict_rules').notNull().default(''),
+  mediaReplyText: text('media_reply_text').notNull().default('Mohon maaf, saat ini saya hanya bisa membalas pesan teks.'),
+
+  // Google Sheet config ID (references chatRecordingConfigs.id — nullable)
+  sheetConfigId:  text('sheet_config_id'),
+
+  createdAt:      timestamp('created_at').defaultNow().notNull(),
+  updatedAt:      timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const aiAgentPausedChats = pgTable('ai_agent_paused_chats', {
+  id:          text('id').primaryKey().$defaultFn(() => createId()),
+  agentId:     text('agent_id').notNull().references(() => aiAgents.id, { onDelete: 'cascade' }),
+  phoneNumber: text('phone_number').notNull(),
+  pausedAt:    timestamp('paused_at').defaultNow().notNull(),
+  resumeAt:    timestamp('resume_at').notNull(),
+})
+
 // ── Inferred types ─────────────────────────────────────────────────
 export type User                = typeof users.$inferSelect
 export type Instance            = typeof instances.$inferSelect
@@ -182,3 +213,5 @@ export type MessageLog          = typeof messageLogs.$inferSelect
 export type Subscription        = typeof subscriptions.$inferSelect
 export type ChatRecordingConfig = typeof chatRecordingConfigs.$inferSelect
 export type ChatRecordingLog    = typeof chatRecordingLogs.$inferSelect
+export type AiAgent             = typeof aiAgents.$inferSelect
+export type AiAgentPausedChat   = typeof aiAgentPausedChats.$inferSelect

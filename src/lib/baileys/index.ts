@@ -20,10 +20,11 @@ const silentLogger = {
 } as any
 import QRCode from 'qrcode'
 import { db } from '@/lib/db'
-import { instances, users, chatRecordingConfigs } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { instances, users, chatRecordingConfigs, aiAgents, aiAgentPausedChats } from '@/lib/db/schema'
+import { eq, and, gt } from 'drizzle-orm'
 import { isProActive } from '@/lib/plan-helpers'
-import { getChatRecordQueue } from '@/lib/queue'
+import { getChatRecordQueue, getAiReplyQueue } from '@/lib/queue'
+import { makeSessionName } from '@/lib/utils'
 
 // ── Types ────────────────────────────────────────────────────────────
 export type SessionStatus = 'disconnected' | 'connecting' | 'qr_code' | 'connected' | 'error'
@@ -181,65 +182,120 @@ export async function startSession(
   // ── creds.update ─────────────────────────────────────────────────
   sock.ev.on('creds.update', saveCreds)
 
-  // ── messages.upsert — Chat Recording ─────────────────────────────
+  // ── messages.upsert — Chat Recording + AI Agent ──────────────────
   sock.ev.on('messages.upsert', (m) => {
     if (m.type !== 'notify') return
     for (const msg of m.messages) {
-      // Skip outgoing messages
-      if (msg.key.fromMe) continue
       const remoteJid    = msg.key.remoteJid    ?? ''
       const remoteJidAlt = msg.key.remoteJidAlt ?? ''
-      // Skip group messages (check both jid fields)
+      // Skip group messages
       if (remoteJid.endsWith('@g.us') || remoteJidAlt.endsWith('@g.us')) continue
-      // Resolve contact JID: prefer whichever field is @s.whatsapp.net
-      // (WhatsApp may send @lid in remoteJid when using Linked ID addressing)
+      // Resolve contact JID
       const contactJid = remoteJidAlt.endsWith('@s.whatsapp.net') ? remoteJidAlt : remoteJid
       if (!contactJid.endsWith('@s.whatsapp.net')) continue
+
       const content = msg.message
       if (!content) continue
 
-      // Extract text content
-      let text: string | null = null
-      if (content.conversation) {
-        text = content.conversation
-      } else if (content.extendedTextMessage?.text) {
-        text = content.extendedTextMessage.text
-      } else if (content.imageMessage?.caption) {
-        text = content.imageMessage.caption
-      }
-      if (!text) continue
-
-      const phone = contactJid.split('@')[0]
-      const name  = msg.pushName ?? ''
+      const fromMe     = msg.key.fromMe ?? false
+      const phone      = contactJid.split('@')[0]
+      const name       = msg.pushName ?? ''
       const recordedAt = new Date(Number(msg.messageTimestamp ?? Date.now() / 1000) * 1000).toISOString()
 
-      // Fire-and-forget: check Pro status + config, then enqueue
+      // Extract text content
+      let text: string | null = null
+      if (content.conversation)                  text = content.conversation
+      else if (content.extendedTextMessage?.text) text = content.extendedTextMessage.text
+      else if (content.imageMessage?.caption)     text = content.imageMessage.caption
+
+      // ── Chat Recording (incoming text only) ──────────────────────
+      if (!fromMe && text) {
+        ;(async () => {
+          try {
+            const [userRow] = await db
+              .select({ plan: users.plan, proExpiresAt: users.proExpiresAt })
+              .from(users)
+              .where(eq(users.id, userId))
+            if (!userRow || !isProActive(userRow)) return
+
+            const [config] = await db
+              .select({ id: chatRecordingConfigs.id })
+              .from(chatRecordingConfigs)
+              .where(and(
+                eq(chatRecordingConfigs.instanceId, instanceId),
+                eq(chatRecordingConfigs.isActive, true),
+              ))
+            if (!config) return
+
+            await getChatRecordQueue().add('record', {
+              configId:   config.id,
+              phone,
+              name,
+              message:    text!,
+              recordedAt,
+            })
+          } catch (err) {
+            console.error('[Baileys] Chat record enqueue error:', err)
+          }
+        })()
+      }
+
+      // ── AI Agent ──────────────────────────────────────────────────
       ;(async () => {
         try {
-          const [userRow] = await db
-            .select({ plan: users.plan, proExpiresAt: users.proExpiresAt })
-            .from(users)
-            .where(eq(users.id, userId))
-          if (!userRow || !isProActive(userRow)) return
-
-          const [config] = await db
-            .select({ id: chatRecordingConfigs.id })
-            .from(chatRecordingConfigs)
+          const [agent] = await db
+            .select({
+              id:       aiAgents.id,
+              isActive: aiAgents.isActive,
+            })
+            .from(aiAgents)
             .where(and(
-              eq(chatRecordingConfigs.instanceId, instanceId),
-              eq(chatRecordingConfigs.isActive, true),
+              eq(aiAgents.instanceId, instanceId),
+              eq(aiAgents.isActive, true),
             ))
-          if (!config) return
+          if (!agent) return
 
-          await getChatRecordQueue().add('record', {
-            configId:   config.id,
+          if (fromMe) {
+            // Human takeover: pause AI for 1 hour
+            const resumeAt = new Date(Date.now() + 60 * 60 * 1000)
+            const existing = await db
+              .select({ id: aiAgentPausedChats.id })
+              .from(aiAgentPausedChats)
+              .where(and(
+                eq(aiAgentPausedChats.agentId, agent.id),
+                eq(aiAgentPausedChats.phoneNumber, phone),
+              ))
+
+            if (existing.length > 0) {
+              await db.update(aiAgentPausedChats).set({ pausedAt: new Date(), resumeAt })
+                .where(and(
+                  eq(aiAgentPausedChats.agentId, agent.id),
+                  eq(aiAgentPausedChats.phoneNumber, phone),
+                ))
+            } else {
+              await db.insert(aiAgentPausedChats).values({
+                agentId:     agent.id,
+                phoneNumber: phone,
+                resumeAt,
+              })
+            }
+            return
+          }
+
+          // Incoming message: enqueue AI reply
+          const sessionName = makeSessionName(userId, instanceId)
+          await getAiReplyQueue().add('reply', {
+            agentId:     agent.id,
+            instanceId,
+            userId,
+            sessionName,
             phone,
             name,
-            message:    text!,
+            text,  // null for non-text
             recordedAt,
           })
         } catch (err) {
-          console.error('[Baileys] Chat record enqueue error:', err)
+          console.error('[Baileys] AI agent enqueue error:', err)
         }
       })()
     }

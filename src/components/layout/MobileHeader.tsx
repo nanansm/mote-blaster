@@ -3,17 +3,18 @@ import Image from 'next/image'
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, LayoutDashboard, Smartphone, Megaphone, CreditCard, MessageSquare, LogOut } from 'lucide-react'
+import { Menu, LayoutDashboard, Smartphone, Megaphone, CreditCard, MessageSquare, LogOut, Bot } from 'lucide-react'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { authClient } from '@/lib/auth-client'
 import logoGram from '@/app/logogramsquare.webp'
 
 const navItems = [
-  { label: 'Dashboard',         href: '/dashboard',      icon: LayoutDashboard },
-  { label: 'WA Connection',     href: '/connection',     icon: Smartphone },
-  { label: 'Campaigns',         href: '/campaigns',      icon: Megaphone },
-  { label: 'WA Chat Recording', href: '/chat-recording', icon: MessageSquare },
-  { label: 'Billing',           href: '/billing',        icon: CreditCard },
+  { label: 'Dashboard',         href: '/dashboard',      icon: LayoutDashboard, badge: null },
+  { label: 'WA Connection',     href: '/connection',     icon: Smartphone,      badge: null },
+  { label: 'Campaigns',         href: '/campaigns',      icon: Megaphone,       badge: null },
+  { label: 'WA Chat Recording', href: '/chat-recording', icon: MessageSquare,   badge: null },
+  { label: 'AI Agent',          href: '/ai-agent',       icon: Bot,             badge: 'PRO' },
+  { label: 'Billing',           href: '/billing',        icon: CreditCard,      badge: null },
 ]
 
 interface MobileHeaderProps {
@@ -61,7 +62,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
             <span className="text-xl font-bold text-slate-900">Blaster</span>
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map(({ label, href, icon: Icon }) => {
+            {navItems.map(({ label, href, icon: Icon, badge }) => {
               const active = pathname.startsWith(href)
               return (
                 <Link
@@ -76,6 +77,11 @@ export function MobileHeader({ user }: MobileHeaderProps) {
                 >
                   <Icon size={18} className={active ? 'text-amber-600' : 'text-slate-400'} />
                   {label}
+                  {badge && (
+                    <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-[#1a3a2a]">
+                      {badge}
+                    </span>
+                  )}
                 </Link>
               )
             })}

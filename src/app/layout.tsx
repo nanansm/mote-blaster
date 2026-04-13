@@ -13,6 +13,9 @@ const font = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Mote Blaster',
   description: 'WhatsApp Blast SaaS',
+  icons: {
+    icon: '/logogramsquare.webp',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
