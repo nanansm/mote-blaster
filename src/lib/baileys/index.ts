@@ -24,7 +24,6 @@ import { instances, users, chatRecordingConfigs, aiAgents, aiAgentPausedChats } 
 import { eq, and, gt } from 'drizzle-orm'
 import { isProActive } from '@/lib/plan-helpers'
 import { getChatRecordQueue, getAiReplyQueue } from '@/lib/queue'
-import { makeSessionName } from '@/lib/utils'
 
 // ── Types ────────────────────────────────────────────────────────────
 export type SessionStatus = 'disconnected' | 'connecting' | 'qr_code' | 'connected' | 'error'
@@ -283,7 +282,6 @@ export async function startSession(
           }
 
           // Incoming message: enqueue AI reply
-          const sessionName = makeSessionName(userId, instanceId)
           await getAiReplyQueue().add('reply', {
             agentId:     agent.id,
             instanceId,

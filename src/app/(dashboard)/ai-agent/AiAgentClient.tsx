@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { Bot, Eye, EyeOff, ChevronDown, ChevronUp, Loader2, Check, AlertCircle, MessageSquare } from 'lucide-react'
+import { Bot, Eye, EyeOff, ChevronDown, ChevronUp, Loader2, Check, AlertCircle, MessageSquare, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -52,6 +52,18 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'prompt', label: 'Prompt' },
   { id: 'paused', label: 'Paused Chat' },
 ]
+
+const PROVIDER_API_KEY_LINKS: Record<string, { label: string; url: string }> = {
+  gemini:      { label: 'Dapatkan API key Gemini',     url: 'https://aistudio.google.com/apikey' },
+  chatgpt:     { label: 'Dapatkan API key OpenAI',     url: 'https://platform.openai.com/api-keys' },
+  claude:      { label: 'Dapatkan API key Claude',     url: 'https://console.anthropic.com/settings/keys' },
+  perplexity:  { label: 'Dapatkan API key Perplexity', url: 'https://www.perplexity.ai/settings/api' },
+  groq:        { label: 'Dapatkan API key Groq',       url: 'https://console.groq.com/keys' },
+  deepseek:    { label: 'Dapatkan API key Deepseek',   url: 'https://platform.deepseek.com/api_keys' },
+  openrouter:  { label: 'Dapatkan API key OpenRouter', url: 'https://openrouter.ai/keys' },
+  mistral:     { label: 'Dapatkan API key Mistral',    url: 'https://console.mistral.ai/api-keys' },
+  cohere:      { label: 'Dapatkan API key Cohere',     url: 'https://dashboard.cohere.com/api-keys' },
+}
 
 const PROVIDERS = [
   { value: 'gemini',      label: 'Gemini (Google)' },
@@ -417,25 +429,25 @@ export default function AiAgentClient() {
   return (
     <div className="p-4 md:p-8 space-y-5">
       {/* Header — always visible */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Bot size={24} className="text-amber-500 shrink-0" />
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">AI Agent</h1>
-            <p className="text-sm text-slate-500">Chatbot WhatsApp otomatis berbasis AI</p>
-          </div>
-          <Badge className="bg-amber-400 text-[#1a3a2a] text-xs font-bold">PRO</Badge>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Bot size={24} className="text-amber-500 shrink-0" />
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">AI Agent</h1>
+          <p className="text-sm text-slate-500">Chatbot WhatsApp otomatis berbasis AI</p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-sm font-medium text-slate-600">
-            {agent?.isActive ? 'Aktif' : 'Nonaktif'}
-          </span>
-          <Toggle
-            checked={agent?.isActive ?? false}
-            onChange={handleToggle}
-            disabled={toggling || !agent}
-          />
-        </div>
+        <Badge className="bg-amber-400 text-[#1a3a2a] text-xs font-bold">PRO</Badge>
+      </div>
+
+      {/* Toggle row — below header, above tabs */}
+      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+        <Toggle
+          checked={agent?.isActive ?? false}
+          onChange={handleToggle}
+          disabled={toggling || !agent}
+        />
+        <span className="text-sm font-semibold text-slate-700">
+          {agent?.isActive ? 'AI Agent Aktif' : 'AI Agent Nonaktif'}
+        </span>
       </div>
 
       {/* Tab navigation — same pattern as Campaigns */}
@@ -471,6 +483,17 @@ export default function AiAgentClient() {
                 ))}
               </SelectContent>
             </Select>
+            {provider && PROVIDER_API_KEY_LINKS[provider] && (
+              <a
+                href={PROVIDER_API_KEY_LINKS[provider].url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                <ExternalLink size={13} />
+                {PROVIDER_API_KEY_LINKS[provider].label}
+              </a>
+            )}
           </div>
 
           {/* API Key + Verify */}
@@ -548,10 +571,7 @@ export default function AiAgentClient() {
               <SelectContent>
                 {instances.map((inst) => (
                   <SelectItem key={inst.id} value={inst.id}>
-                    {inst.name}
-                    <span className={`ml-2 text-xs ${inst.status === 'connected' ? 'text-green-500' : 'text-slate-400'}`}>
-                      ({inst.status})
-                    </span>
+                    {`${inst.name} (${inst.status})`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -569,7 +589,7 @@ export default function AiAgentClient() {
                 <SelectItem value="">— Tidak pakai sheet —</SelectItem>
                 {sheets.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.instanceName ? `${s.instanceName} — ` : ''}{s.sheetName}
+                    {`${s.instanceName ? `${s.instanceName} — ` : ''}${s.sheetName}`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -580,14 +600,16 @@ export default function AiAgentClient() {
           </div>
 
           {/* Save config button */}
-          <Button
-            onClick={handleSaveConfig}
-            disabled={savingConfig}
-            className="w-full bg-[#1a3a2a] hover:bg-[#1a3a2a]/90 text-white"
-          >
-            {savingConfig ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-            💾 Simpan Konfigurasi
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveConfig}
+              disabled={savingConfig}
+              className="px-8 bg-[#1a3a2a] hover:bg-[#1a3a2a]/90 text-white"
+            >
+              {savingConfig ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+              💾 Simpan Konfigurasi
+            </Button>
+          </div>
 
           {/* Tutorial accordion */}
           <TutorialAccordion
@@ -658,14 +680,16 @@ export default function AiAgentClient() {
           </div>
 
           {/* Save prompt button */}
-          <Button
-            onClick={handleSavePrompt}
-            disabled={savingPrompt}
-            className="w-full bg-[#1a3a2a] hover:bg-[#1a3a2a]/90 text-white"
-          >
-            {savingPrompt ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-            💾 Simpan Prompt
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSavePrompt}
+              disabled={savingPrompt}
+              className="px-8 bg-[#1a3a2a] hover:bg-[#1a3a2a]/90 text-white"
+            >
+              {savingPrompt ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+              💾 Simpan Prompt
+            </Button>
+          </div>
 
           {/* Tutorial accordion */}
           <TutorialAccordion

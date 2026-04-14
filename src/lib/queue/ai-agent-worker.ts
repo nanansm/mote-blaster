@@ -1,7 +1,7 @@
 import { Worker, type Job } from 'bullmq'
 import { getRedis } from './index'
 import { db } from '@/lib/db'
-import { aiAgents, aiAgentPausedChats, chatRecordingConfigs } from '@/lib/db/schema'
+import { aiAgents, aiAgentPausedChats, chatRecordingConfigs, instances } from '@/lib/db/schema'
 import { eq, and, gt } from 'drizzle-orm'
 import { decrypt } from '@/lib/ai-agent/crypto'
 import { callLLM, type LLMMessage } from '@/lib/ai-agent/llm'
@@ -111,7 +111,18 @@ async function updateSheetRow(
 }
 
 async function processJob(job: Job<AiReplyJobData>) {
-  const { agentId, sessionName, phone, name, text } = job.data
+  const { agentId, instanceId, phone, name, text } = job.data
+
+  // Resolve correct session_name from instances table (instanceId → session_name)
+  const [instRow] = await db
+    .select({ sessionName: instances.sessionName })
+    .from(instances)
+    .where(eq(instances.id, instanceId))
+  if (!instRow) {
+    console.error(`[AiReplyWorker] Instance ${instanceId} not found`)
+    return
+  }
+  const sessionName = instRow.sessionName
 
   // 1. Fetch agent config
   const [agent] = await db
