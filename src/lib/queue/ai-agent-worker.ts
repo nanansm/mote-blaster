@@ -155,7 +155,6 @@ async function processJob(job: Job<AiReplyJobData>) {
   // 4. Load Google Sheet context + exclude numbers
   let contextMessages: LLMMessage[] = []
   let rows: string[][] = []
-  let repliedByCol  = 4
   let repliedTextCol = 5
 
   if (agent.sheetConfigId) {
@@ -167,7 +166,6 @@ async function processJob(job: Job<AiReplyJobData>) {
     if (cfg) {
       rows = await readSheetRows(cfg.spreadsheetId, cfg.sheetName)
       const cols = await ensureExtendedHeaders(cfg.spreadsheetId, cfg.sheetName, rows)
-      repliedByCol   = cols.repliedByCol
       repliedTextCol = cols.repliedTextCol
 
       // Check exclude_number column
@@ -216,19 +214,28 @@ async function processJob(job: Job<AiReplyJobData>) {
   // 7. Send reply
   await sendMessage(sessionName, phone, reply)
 
-  // 8. Update Google Sheet if config exists
-  if (agent.sheetConfigId && rows.length > 1) {
+  // 8. Update Google Sheet if config exists — match row by phone + exact chat text
+  if (agent.sheetConfigId) {
     const [cfg] = await db
       .select({ spreadsheetId: chatRecordingConfigs.spreadsheetId, sheetName: chatRecordingConfigs.sheetName })
       .from(chatRecordingConfigs)
       .where(eq(chatRecordingConfigs.id, agent.sheetConfigId))
 
     if (cfg) {
-      // Find last row matching this phone (1-indexed, +1 for header, +1 for 1-based)
-      const dataRows = rows.slice(1)
+      // Re-read sheet: chat-record-worker should have written the row by now
+      // (3–8 s random delay already elapsed before we reach here)
+      const freshRows = await readSheetRows(cfg.spreadsheetId, cfg.sheetName)
+      const cols = await ensureExtendedHeaders(cfg.spreadsheetId, cfg.sheetName, freshRows)
+
+      // Find the last row that matches this phone AND this exact incoming message.
+      // Matching on both fields prevents updating a previous conversation's row
+      // when the current row hasn't been flushed yet.
+      const dataRows = freshRows.slice(1)
       let lastMatchIdx = -1
       for (let i = dataRows.length - 1; i >= 0; i--) {
-        if (normalizePhone(dataRows[i][2] ?? '') === phone) {
+        const rowPhone = normalizePhone(dataRows[i][2] ?? '')
+        const rowChat  = dataRows[i][3] ?? ''
+        if (rowPhone === phone && rowChat === text) {
           lastMatchIdx = i
           break
         }
@@ -237,8 +244,8 @@ async function processJob(job: Job<AiReplyJobData>) {
         const sheetRowNum = lastMatchIdx + 2  // +1 for header, +1 for 1-based
         await updateSheetRow(
           cfg.spreadsheetId, cfg.sheetName, sheetRowNum,
-          repliedByCol,  'ai',
-          repliedTextCol, reply,
+          cols.repliedByCol,   'ai',
+          cols.repliedTextCol, reply,
         )
       }
     }
