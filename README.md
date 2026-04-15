@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mote Blaster
 
-## Getting Started
+WhatsApp Bulk Messaging SaaS + Chat Recording ke Google Sheets.
 
-First, run the development server:
+**URL:** https://blaster.motekreatif.com
+**Stack:** Next.js 15, TypeScript, Drizzle ORM, PostgreSQL, BullMQ, Baileys, TailwindCSS, shadcn/ui
+
+---
+
+## Dev
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NODE_OPTIONS=--max-old-space-size=4096 npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Progress UX Improvement
 
-To learn more about Next.js, take a look at the following resources:
+### Batch 1 — Ganti Istilah Teknis
+- [x] #1 — "Instance" → "Nomor WhatsApp" (semua halaman)
+- [x] #2 — Status Connection → Bahasa Indonesia
+- [x] #4 — Rename menu sidebar (WA Connection → Nomor WA, Campaigns → Kirim Pesan, WA Chat Recording → Catat Chat, Billing → Langganan)
+- [x] #5 — Fix typo "Tambahkan WhatsApp WhatsApp"
+- [x] #6 — Status Campaign tab → Bahasa Indonesia (Draf, Antri, Berjalan, Selesai, Gagal, Dijeda)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Batch 2 — UX Improvement
+- [x] #3 — Pindahkan BlastingRules banner ke New Campaign saja (hapus dari Dashboard & Connection)
+- [x] #7 — Empty state Connection yang lebih jelas (icon Smartphone besar + CTA)
+- [x] #8 — Tambah label di tombol aksi Campaign (Eye → "Detail", Pause → "Jeda")
+- [x] #9 — Billing page → Bahasa Indonesia + konfirmasi batal langganan
+- [x] #15 — Konfirmasi sebelum hapus nomor WhatsApp (AlertDialog)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Batch 3 — AI Agent & Chat Recording UX (BELUM)
+- [ ] #10 — AI Agent: rename istilah teknis (Provider LLM, API Key, System Prompt, Strict Rules)
+- [ ] #11 — Chat Recording: tampilkan nama spreadsheet, default provider Gemini, sembunyikan lainnya di "Opsi Lanjutan"
 
-## Deploy on Vercel
+### Batch 4 — Landing Page & Minor Polish (BELUM)
+- [ ] #12 — Delay explanation di New Campaign pindah ke atas input
+- [ ] #13 — "Simpan Draft" → "Simpan untuk Nanti"
+- [ ] #14 — Nav landing page → samakan ke Bahasa Indonesia
+- [ ] #17 — "Multi Instance" di landing → "Pakai Banyak Nomor WA"
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Dashboard Redesign
+- [x] Welcome message "Halo, [nama]! 👋" di atas stat cards
+- [x] Stat cards: icon dengan colored background, angka besar
+- [x] Highlight cards: warna amber (primary) & hijau tua (brand color)
+- [x] Chart: warna amber, label lebih jelas
+- [x] BlastingRules: style amber soft (bukan merah agresif)
+- [x] Connection page: card dengan border kiri berwarna sesuai status, empty state illustratif
+- [x] Campaign page: progress bar visual, filter tab amber, label Indonesia
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Bug Fixes Done
+- [x] Phone number: fix LID format, gunakan remoteJidAlt
+- [x] Chat recording: cascade delete logs sebelum config
+- [x] Database: tambah pro_expires_at, chat_recording_config, chat_recording_logs
+- [x] Tutorial: tampilkan service account email langsung
+
+### Known Issues
+- [ ] Xendit payment belum aktif (menunggu verifikasi)
+- [ ] Chat Recording: input Spreadsheet ID bisa diubah jadi input paste URL Google Sheets (auto-extract ID)
+- [ ] Onboarding flow untuk user baru
+- [ ] Video demo di landing page belum ada
+- [ ] Floating WhatsApp CS button belum ada

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChevronRight, ChevronLeft, Upload, Link2, CheckCircle, Download, Info } from 'lucide-react'
+import { BlastingRules } from '@/components/shared/BlastingRules'
 
 type Step = 1 | 2 | 3 | 4
 type Source = 'csv' | 'google_sheets' | ''
@@ -163,30 +164,33 @@ export default function NewCampaignPage() {
 
       {/* Step 1: Basic Info */}
       {step === 1 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-4">
-          <h2 className="font-semibold text-slate-800">Informasi Dasar</h2>
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Nama Campaign</label>
-            <Input placeholder="Promo Lebaran 2025" value={name} onChange={e => setName(e.target.value)} />
+        <div className="space-y-4">
+          <BlastingRules />
+          <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-4">
+            <h2 className="font-semibold text-slate-800">Informasi Dasar</h2>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Nama Campaign</label>
+              <Input placeholder="Promo Lebaran 2025" value={name} onChange={e => setName(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm text-slate-600 mb-1 block">Nomor WhatsApp</label>
+              {instances.length === 0 ? (
+                <p className="text-sm text-red-500">Belum ada nomor WA yang terhubung. Hubungkan nomor WhatsApp dulu di menu Nomor WA.</p>
+              ) : (
+                <Select value={instanceId} onValueChange={(v) => setInstanceId(v ?? '')}>
+                  <SelectTrigger><SelectValue placeholder="Pilih nomor WA..." /></SelectTrigger>
+                  <SelectContent>
+                    {instances.map((i: any) => (
+                      <SelectItem key={i.id} value={i.id}>{i.name} ({i.phoneNumber ?? i.sessionName})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <Button className="w-full min-h-[44px]" onClick={() => setStep(2)} disabled={!name || !instanceId}>
+              Lanjut <ChevronRight size={16} className="ml-1" />
+            </Button>
           </div>
-          <div>
-            <label className="text-sm text-slate-600 mb-1 block">Instance WhatsApp</label>
-            {instances.length === 0 ? (
-              <p className="text-sm text-red-500">Tidak ada instance yang connected. Hubungkan WhatsApp dulu di halaman Connection.</p>
-            ) : (
-              <Select value={instanceId} onValueChange={(v) => setInstanceId(v ?? '')}>
-                <SelectTrigger><SelectValue placeholder="Pilih instance..." /></SelectTrigger>
-                <SelectContent>
-                  {instances.map((i: any) => (
-                    <SelectItem key={i.id} value={i.id}>{i.name} ({i.phoneNumber ?? i.sessionName})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          <Button className="w-full min-h-[44px]" onClick={() => setStep(2)} disabled={!name || !instanceId}>
-            Lanjut <ChevronRight size={16} className="ml-1" />
-          </Button>
         </div>
       )}
 

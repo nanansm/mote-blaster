@@ -8,12 +8,12 @@ import { useRouter } from 'next/navigation'
 import logoGram from '@/app/logogramsquare.webp'
 
 const navItems = [
-  { label: 'Dashboard',          href: '/dashboard',       icon: LayoutDashboard, badge: null },
-  { label: 'WA Connection',      href: '/connection',      icon: Smartphone,      badge: null },
-  { label: 'Campaigns',          href: '/campaigns',       icon: Megaphone,       badge: null },
-  { label: 'WA Chat Recording',  href: '/chat-recording',  icon: MessageSquare,   badge: null },
-  { label: 'AI Agent',           href: '/ai-agent',        icon: Bot,             badge: 'PRO' },
-  { label: 'Billing',            href: '/billing',         icon: CreditCard,      badge: null },
+  { label: 'Dashboard',    href: '/dashboard',      icon: LayoutDashboard, badge: null },
+  { label: 'Nomor WA',     href: '/connection',     icon: Smartphone,      badge: null },
+  { label: 'Kirim Pesan',  href: '/campaigns',      icon: Megaphone,       badge: null },
+  { label: 'Catat Chat',   href: '/chat-recording', icon: MessageSquare,   badge: null },
+  { label: 'AI Agent',     href: '/ai-agent',       icon: Bot,             badge: 'PRO' },
+  { label: 'Langganan',    href: '/billing',        icon: CreditCard,      badge: null },
 ]
 
 interface SidebarProps {
