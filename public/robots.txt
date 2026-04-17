@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://blaster.motekreatif.com/sitemap.xml
