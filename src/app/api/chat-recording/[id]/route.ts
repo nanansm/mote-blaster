@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requireUser } from '@/lib/auth-helpers'
 import { db } from '@/lib/db'
-import { users, chatRecordingConfigs } from '@/lib/db/schema'
+import { users, chatRecordingConfigs, chatRecordingLogs } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { isProActive } from '@/lib/plan-helpers'
 
@@ -57,12 +57,17 @@ export async function DELETE(
 
     const { id } = await params
 
-    const [deleted] = await db
-      .delete(chatRecordingConfigs)
+    // Verify ownership before deleting
+    const [existing] = await db.select({ id: chatRecordingConfigs.id })
+      .from(chatRecordingConfigs)
       .where(and(eq(chatRecordingConfigs.id, id), eq(chatRecordingConfigs.userId, session.user.id)))
-      .returning({ id: chatRecordingConfigs.id })
+    if (!existing) return Response.json({ error: 'Config tidak ditemukan' }, { status: 404 })
 
-    if (!deleted) return Response.json({ error: 'Config tidak ditemukan' }, { status: 404 })
+    // Use transaction: delete logs first (FK constraint), then config
+    await db.transaction(async (tx) => {
+      await tx.delete(chatRecordingLogs).where(eq(chatRecordingLogs.configId, id))
+      await tx.delete(chatRecordingConfigs).where(eq(chatRecordingConfigs.id, id))
+    })
 
     return Response.json({ success: true })
   } catch (err) {

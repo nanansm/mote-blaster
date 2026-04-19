@@ -9,6 +9,9 @@ export async function register() {
     const { startAiReplyWorker } = await import('./lib/queue/ai-agent-worker')
     await startAiReplyWorker()
 
+    const { startWaValidateWorker } = await import('./lib/queue/wa-validate-worker')
+    await startWaValidateWorker()
+
     // Jangan restore sessions di production saat startup —
     // user connect manual via dashboard, mencegah memory spike
     if (process.env.NODE_ENV !== 'production') {

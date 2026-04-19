@@ -361,6 +361,13 @@ export async function restoreSessions(): Promise<void> {
   console.log('[Baileys] Session restore complete')
 }
 
+// ── getSocketForValidation ────────────────────────────────────────────
+export function getSocketForValidation(sessionName: string): WASocket | null {
+  const e = sessions.get(sessionName)
+  if (!e || e.status !== 'connected') return null
+  return e.socket
+}
+
 // ── getAllSessions ─────────────────────────────────────────────────────
 export function getAllSessions(): Array<{
   sessionName: string

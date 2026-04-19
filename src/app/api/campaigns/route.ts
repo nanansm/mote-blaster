@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server'
 import { requireUser } from '@/lib/auth-helpers'
 import { db } from '@/lib/db'
-import { campaigns, contacts } from '@/lib/db/schema'
+import { campaigns, contacts, instances } from '@/lib/db/schema'
 import { eq, and, count, inArray, desc } from 'drizzle-orm'
+import { getWaValidateQueue } from '@/lib/queue'
 
 export async function GET(req: NextRequest) {
   try {
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
     }).returning()
 
     // Insert contacts ke DB
+    let insertedContacts: { id: string; phone: string }[] = []
     if (rows.length > 0) {
       const contactValues = rows.map((r) => {
         const { phone, name, ...rest } = r
@@ -73,7 +75,26 @@ export async function POST(req: NextRequest) {
           variables: Object.keys(rest).length > 0 ? rest : null,
         }
       })
-      await db.insert(contacts).values(contactValues)
+      insertedContacts = await db.insert(contacts).values(contactValues).returning({ id: contacts.id, phone: contacts.phone })
+    }
+
+    // Enqueue WA validation jobs in background
+    if (insertedContacts.length > 0) {
+      try {
+        const [instance] = await db.select({ sessionName: instances.sessionName })
+          .from(instances).where(eq(instances.id, body.instanceId))
+        if (instance) {
+          const queue = getWaValidateQueue()
+          const jobs = insertedContacts.map((c, idx) => ({
+            name: 'validate',
+            data: { contactId: c.id, phone: c.phone, sessionName: instance.sessionName },
+            opts: { delay: idx * 2_000 },
+          }))
+          await queue.addBulk(jobs)
+        }
+      } catch (e) {
+        console.error('[Campaigns] Failed to enqueue WA validation:', e)
+      }
     }
 
     return Response.json({ data: created }, { status: 201 })

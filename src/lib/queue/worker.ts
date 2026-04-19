@@ -1,7 +1,7 @@
 import { Worker, type Job } from 'bullmq'
 import { getRedis } from './index'
 import { db } from '@/lib/db'
-import { messageLogs, campaigns, dailyUsage } from '@/lib/db/schema'
+import { messageLogs, campaigns, dailyUsage, contacts } from '@/lib/db/schema'
 import { eq, and, sql, inArray, count } from 'drizzle-orm'
 import { renderTemplate } from '@/lib/template-engine'
 import { normalizePhone, getTodayWIB } from '@/lib/utils'
@@ -49,6 +49,24 @@ export async function startWorker() {
   g._worker = new Worker<BlastJobData>('blast', async (job: Job<BlastJobData>) => {
     const { campaignId, contactPhone, contactName, variables,
             messageTemplate, sessionName, userId, isPro } = job.data
+
+    // 0. Cek status campaign — skip jika paused/completed/failed
+    const [campaignRow] = await db.select({ status: campaigns.status })
+      .from(campaigns).where(eq(campaigns.id, campaignId))
+    if (!campaignRow || ['paused', 'completed', 'failed'].includes(campaignRow.status)) {
+      return  // skip tanpa mark as failed, tanpa retry
+    }
+
+    // 0b. Skip jika nomor sudah divalidasi dan tidak aktif di WA
+    const [contactRow] = await db.select({ isValidWa: contacts.isValidWa })
+      .from(contacts)
+      .where(and(eq(contacts.campaignId, campaignId), eq(contacts.phone, contactPhone)))
+    if (contactRow?.isValidWa === false) {
+      await db.update(messageLogs).set({ status: 'skipped', error: 'Nomor tidak aktif di WhatsApp' })
+        .where(and(eq(messageLogs.campaignId, campaignId), eq(messageLogs.contactPhone, contactPhone)))
+      await checkAndCompleteCampaign(campaignId)
+      return
+    }
 
     // 1. Cek daily limit (FREE plan)
     if (!isPro) {

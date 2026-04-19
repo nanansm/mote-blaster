@@ -458,7 +458,7 @@ export default function AiAgentClient() {
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 md:px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap min-h-[44px] ${
               activeTab === tab.id
-                ? 'border-blue-600 text-blue-600'
+                ? 'border-amber-500 text-amber-700'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -488,7 +488,7 @@ export default function AiAgentClient() {
                 href={PROVIDER_API_KEY_LINKS[provider].url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                className="inline-flex items-center gap-1 text-sm text-amber-600 hover:text-amber-800 hover:underline"
               >
                 <ExternalLink size={13} />
                 {PROVIDER_API_KEY_LINKS[provider].label}

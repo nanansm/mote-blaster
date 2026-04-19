@@ -6,6 +6,7 @@ const g = global as typeof global & {
   _blastQueue?: Queue
   _chatRecordQueue?: Queue
   _aiReplyQueue?: Queue
+  _waValidateQueue?: Queue
 }
 
 export function getRedis(): IORedis {
@@ -66,4 +67,17 @@ export function getAiReplyQueue(): Queue {
     },
   })
   return g._aiReplyQueue
+}
+
+export function getWaValidateQueue(): Queue {
+  if (g._waValidateQueue) return g._waValidateQueue
+  g._waValidateQueue = new Queue('wa-validate', {
+    connection: getRedis(),
+    defaultJobOptions: {
+      removeOnComplete: 100,
+      removeOnFail:     100,
+      attempts:         1,
+    },
+  })
+  return g._waValidateQueue
 }

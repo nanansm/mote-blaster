@@ -115,6 +115,7 @@ export const contacts = pgTable('contacts', {
   phone:      text('phone').notNull(),
   name:       text('name'),
   variables:  json('variables').$type<Record<string, string>>(),
+  isValidWa:  boolean('is_valid_wa'),  // null=belum dicek, true=valid, false=tidak valid
   createdAt:  timestamp('created_at').notNull().defaultNow(),
 })
 

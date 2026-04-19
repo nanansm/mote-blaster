@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Pesan Terkirim (Bulan Ini)" value={(d.sentCount ?? 0).toLocaleString()} icon={<MessageSquare size={18} />} color="blue" />
+        <StatCard title="Pesan Terkirim (Bulan Ini)" value={(d.sentCount ?? 0).toLocaleString()} icon={<MessageSquare size={18} />} color="amber" />
         <StatCard title="Pesan Gagal"        value={(d.failedCount ?? 0).toLocaleString()}  icon={<AlertCircle size={18} />} color="red" />
         <StatCard title="Nomor WA Aktif"     value={d.activeInstances ?? 0}                 icon={<Smartphone size={18} />}  color="green" />
         <StatCard title="Pengiriman Aktif"   value={d.activeCampaigns ?? 0}                 icon={<Megaphone size={18} />}   color="amber" />
